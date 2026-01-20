@@ -12,6 +12,7 @@ from app.core.exception_handlers import register_exception_handlers
 from app.core.tenancy import TenantMiddleware
 from app.features.auth.router import router as auth_router
 from app.features.assemblies.router import router as assemblies_router
+from app.features.agendas.router import router as agendas_router
 from app.features.condominiums.router import router as condominiums_router
 from app.features.qr_codes.router import router as qr_codes_router
 from app.features.users.router import router as users_router
@@ -55,6 +56,11 @@ app.include_router(
     assemblies_router,
     prefix=f"{API_V1_PREFIX}/assemblies",
     tags=["Assemblies"],
+)
+app.include_router(
+    agendas_router,
+    prefix=f"{API_V1_PREFIX}/agendas",
+    tags=["Agendas"],
 )
 app.include_router(
     users_router,
