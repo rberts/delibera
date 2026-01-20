@@ -2,7 +2,7 @@
 Application settings using Pydantic BaseSettings.
 Loads from environment variables with validation.
 """
-from typing import List, Any
+from typing import List, Any, Optional
 
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = ["*"]
 
     # Cookie settings
-    COOKIE_DOMAIN: str = "localhost"
+    COOKIE_DOMAIN: Optional[str] = None
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     def split_csv(cls, value: Any) -> List[str]:
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
+        return value
+
+    @field_validator("COOKIE_DOMAIN", mode="before")
+    @classmethod
+    def normalize_cookie_domain(cls, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
 

@@ -8,6 +8,9 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
+from app.core.exception_handlers import register_exception_handlers
+from app.core.tenancy import TenantMiddleware
+from app.features.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -30,6 +33,14 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=settings.ALLOWED_HOSTS,
 )
+
+app.add_middleware(TenantMiddleware)
+
+register_exception_handlers(app)
+
+API_V1_PREFIX = "/api/v1"
+
+app.include_router(auth_router, prefix=f"{API_V1_PREFIX}/auth", tags=["Authentication"])
 
 
 @app.get("/health")
