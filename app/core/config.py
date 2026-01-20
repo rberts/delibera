@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Delibera API"
     DEBUG: bool = False
+    ENVIRONMENT: str = "development"
 
     # Database
     DATABASE_URL: str
@@ -39,6 +40,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
     @field_validator("CORS_ORIGINS", "ALLOWED_HOSTS", mode="before")
     @classmethod
