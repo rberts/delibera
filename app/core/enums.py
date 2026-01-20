@@ -26,6 +26,11 @@ class UserRole(str, Enum):
     assembly_operator = "assembly_operator"
 
 
+class UserStatus(str, Enum):
+    active = "active"
+    inactive = "inactive"
+
+
 class CondominiumStatus(str, Enum):
     active = "active"
     inactive = "inactive"

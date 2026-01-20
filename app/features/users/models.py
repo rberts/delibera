@@ -2,7 +2,7 @@
 from sqlalchemy import CheckConstraint, Column, DateTime, Enum, ForeignKey, Index, Integer, String, func, text
 
 from app.core.database import Base
-from app.core.enums import UserRole
+from app.core.enums import UserRole, UserStatus
 
 
 class User(Base):
@@ -32,6 +32,12 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum(UserRole, name="user_role"), nullable=False, server_default=UserRole.assembly_operator.value)
+    status = Column(
+        Enum(UserStatus, name="user_status"),
+        nullable=False,
+        default=UserStatus.active,
+        server_default=UserStatus.active.value,
+    )
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime, nullable=True)

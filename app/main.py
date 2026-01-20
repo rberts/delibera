@@ -13,6 +13,7 @@ from app.core.tenancy import TenantMiddleware
 from app.features.auth.router import router as auth_router
 from app.features.assemblies.router import router as assemblies_router
 from app.features.condominiums.router import router as condominiums_router
+from app.features.users.router import router as users_router
 from app import models  # noqa: F401
 
 app = FastAPI(
@@ -53,6 +54,11 @@ app.include_router(
     assemblies_router,
     prefix=f"{API_V1_PREFIX}/assemblies",
     tags=["Assemblies"],
+)
+app.include_router(
+    users_router,
+    prefix=f"{API_V1_PREFIX}/users",
+    tags=["Users"],
 )
 
 

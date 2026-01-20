@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.enums import UserStatus
 from app.features.users.models import User
 
 security = HTTPBearer()
@@ -37,7 +38,7 @@ async def get_current_user(
         User.deleted_at.is_(None),
     ).first()
 
-    if user is None:
+    if user is None or user.status != UserStatus.active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     return user
