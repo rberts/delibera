@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from app.core.enums import CondominiumStatus
+
 
 class CondominiumBase(BaseModel):
     """Base schema with common fields."""
@@ -29,6 +31,7 @@ class CondominiumUpdate(BaseModel):
 
     name: Optional[str] = None
     address: Optional[str] = None
+    status: Optional[CondominiumStatus] = None
 
     @field_validator("name")
     @classmethod
@@ -44,6 +47,7 @@ class CondominiumResponse(CondominiumBase):
 
     id: int
     tenant_id: int
+    status: CondominiumStatus
     created_at: datetime
     updated_at: datetime
 

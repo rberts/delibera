@@ -1,11 +1,12 @@
 """Condominium CRUD endpoints."""
 from math import ceil
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_tenant, require_property_manager
+from app.core.enums import CondominiumStatus
 from app.features.condominiums import service
 from app.features.condominiums.schemas import (
     CondominiumCreate,
@@ -42,6 +43,7 @@ async def create_condominium(
 async def list_condominiums(
     page: int = 1,
     page_size: int = 20,
+    status: str = "active",
     db: Session = Depends(get_db),
     tenant_id: int = Depends(get_current_tenant),
 ) -> CondominiumListResponse:
@@ -50,7 +52,12 @@ async def list_condominiums(
     page_size = min(page_size, 100)
     skip = (page - 1) * page_size
 
-    condominiums, total = service.list_condominiums(db, tenant_id, skip, page_size)
+    try:
+        status_filter = CondominiumStatus(status)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status filter") from exc
+
+    condominiums, total = service.list_condominiums(db, tenant_id, skip, page_size, status_filter)
 
     return CondominiumListResponse(
         items=[CondominiumResponse.model_validate(c) for c in condominiums],
@@ -96,7 +103,7 @@ async def update_condominium(
 @router.delete(
     "/{condominium_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete condominium",
+    summary="Deactivate condominium",
     dependencies=[Depends(require_property_manager)],
 )
 async def delete_condominium(
@@ -104,5 +111,5 @@ async def delete_condominium(
     db: Session = Depends(get_db),
     tenant_id: int = Depends(get_current_tenant),
 ) -> None:
-    """Delete condominium."""
+    """Deactivate condominium."""
     service.delete_condominium(db, condominium_id, tenant_id)

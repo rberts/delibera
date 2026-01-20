@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.tenancy import TenantMiddleware
 from app.features.auth.router import router as auth_router
+from app.features.assemblies.router import router as assemblies_router
 from app.features.condominiums.router import router as condominiums_router
 from app import models  # noqa: F401
 
@@ -47,6 +48,11 @@ app.include_router(
     condominiums_router,
     prefix=f"{API_V1_PREFIX}/condominiums",
     tags=["Condominiums"],
+)
+app.include_router(
+    assemblies_router,
+    prefix=f"{API_V1_PREFIX}/assemblies",
+    tags=["Assemblies"],
 )
 
 

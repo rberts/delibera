@@ -11,6 +11,7 @@ class AssemblyStatus(str, Enum):
     draft = "draft"
     in_progress = "in_progress"
     finished = "finished"
+    cancelled = "cancelled"
 
 
 class AgendaStatus(str, Enum):
@@ -23,3 +24,8 @@ class AgendaStatus(str, Enum):
 class UserRole(str, Enum):
     property_manager = "property_manager"
     assembly_operator = "assembly_operator"
+
+
+class CondominiumStatus(str, Enum):
+    active = "active"
+    inactive = "inactive"

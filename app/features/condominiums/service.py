@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.enums import CondominiumStatus
 from app.features.condominiums.models import Condominium
 from app.features.condominiums.schemas import CondominiumCreate, CondominiumUpdate
 
@@ -39,9 +40,16 @@ def get_condominium(db: Session, condominium_id: int, tenant_id: int) -> Condomi
     return condominium
 
 
-def list_condominiums(db: Session, tenant_id: int, skip: int = 0, limit: int = 100) -> tuple[list[Condominium], int]:
+def list_condominiums(
+    db: Session,
+    tenant_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status_filter: CondominiumStatus = CondominiumStatus.active,
+) -> tuple[list[Condominium], int]:
     """List condominiums with pagination (tenant isolated)."""
     query = db.query(Condominium).filter(Condominium.tenant_id == tenant_id)
+    query = query.filter(Condominium.status == status_filter)
 
     total = query.count()
     condominiums = query.offset(skip).limit(limit).all()
@@ -59,6 +67,15 @@ def update_condominium(
     condominium = get_condominium(db, condominium_id, tenant_id)
 
     update_data = condominium_update.model_dump(exclude_unset=True)
+    if condominium.status == CondominiumStatus.inactive:
+        allowed_fields = {"status"}
+        if not update_data:
+            return condominium
+        if set(update_data.keys()) - allowed_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Inactive condominiums can only change status",
+            )
     for field, value in update_data.items():
         setattr(condominium, field, value)
 
@@ -69,15 +86,20 @@ def update_condominium(
 
 
 def delete_condominium(db: Session, condominium_id: int, tenant_id: int) -> None:
-    """Delete condominium if no assemblies exist."""
+    """Deactivate condominium (soft delete)."""
     condominium = get_condominium(db, condominium_id, tenant_id)
 
+    if condominium.status == CondominiumStatus.inactive:
+        return
+
+    condominium.status = CondominiumStatus.inactive
+
     try:
-        db.delete(condominium)
         db.commit()
+        db.refresh(condominium)
     except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete condominium with existing assemblies",
+            detail="Cannot deactivate condominium with existing assemblies",
         )
