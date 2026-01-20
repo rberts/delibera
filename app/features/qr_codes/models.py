@@ -1,8 +1,9 @@
 """SQLAlchemy models for QR codes."""
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, UniqueConstraint, text, func
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer, UniqueConstraint, text, func
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
+from app.core.enums import QRCodeStatus
 
 
 class QRCode(Base):
@@ -23,5 +24,11 @@ class QRCode(Base):
     tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     token = Column(UUID(as_uuid=True), nullable=False, unique=True, server_default=text("gen_random_uuid()"))
     visual_number = Column(Integer, nullable=False)
+    status = Column(
+        Enum(QRCodeStatus, name="qr_code_status"),
+        nullable=False,
+        default=QRCodeStatus.active,
+        server_default=QRCodeStatus.active.value,
+    )
     created_at = Column(DateTime, server_default=func.now())
     deleted_at = Column(DateTime, nullable=True)

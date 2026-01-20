@@ -34,3 +34,8 @@ class UserStatus(str, Enum):
 class CondominiumStatus(str, Enum):
     active = "active"
     inactive = "inactive"
+
+
+class QRCodeStatus(str, Enum):
+    active = "active"
+    inactive = "inactive"
