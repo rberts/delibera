@@ -1,4 +1,6 @@
 """Business logic for assembly CRUD operations."""
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -43,11 +45,24 @@ def _get_operator(db: Session, operator_id: int, tenant_id: int) -> User:
     return operator
 
 
+def _validate_assembly_date(assembly_date: datetime) -> None:
+    """Ensure assembly date is not in the past relative to server time."""
+    now = datetime.now(timezone.utc)
+    if assembly_date.tzinfo is None:
+        assembly_date = assembly_date.replace(tzinfo=timezone.utc)
+    if assembly_date < now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="assembly_date must be in the future",
+        )
+
+
 def create_assembly(db: Session, assembly: AssemblyCreate, tenant_id: int) -> Assembly:
     """Create a new assembly."""
     _get_condominium(db, assembly.condominium_id, tenant_id)
     if assembly.operator_id is not None:
         _get_operator(db, assembly.operator_id, tenant_id)
+    _validate_assembly_date(assembly.assembly_date)
 
     db_assembly = Assembly(
         condominium_id=assembly.condominium_id,
@@ -123,6 +138,8 @@ def update_assembly(
         _get_condominium(db, update_data["condominium_id"], tenant_id)
     if "operator_id" in update_data and update_data["operator_id"] is not None:
         _get_operator(db, update_data["operator_id"], tenant_id)
+    if "assembly_date" in update_data and update_data["assembly_date"] is not None:
+        _validate_assembly_date(update_data["assembly_date"])
 
     for field, value in update_data.items():
         setattr(assembly, field, value)
