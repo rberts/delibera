@@ -14,8 +14,10 @@ from app.features.auth.router import router as auth_router
 from app.features.assemblies.router import router as assemblies_router
 from app.features.agendas.router import router as agendas_router
 from app.features.condominiums.router import router as condominiums_router
+from app.features.checkin.router import router as checkin_router
 from app.features.qr_codes.router import router as qr_codes_router
 from app.features.users.router import router as users_router
+from app.features.voting.router import router as voting_router
 from app import models  # noqa: F401
 
 app = FastAPI(
@@ -71,6 +73,16 @@ app.include_router(
     qr_codes_router,
     prefix=f"{API_V1_PREFIX}/qr-codes",
     tags=["QR Codes"],
+)
+app.include_router(
+    voting_router,
+    prefix=f"{API_V1_PREFIX}/voting",
+    tags=["Voting"],
+)
+app.include_router(
+    checkin_router,
+    prefix=f"{API_V1_PREFIX}/checkin",
+    tags=["Check-in"],
 )
 
 

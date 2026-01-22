@@ -1,12 +1,13 @@
 """Assembly CRUD endpoints."""
 from math import ceil
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_tenant, require_property_manager
 from app.features.assemblies import service
+from app.features.assemblies.csv_processor import import_csv_units, preview_csv_import
 from app.features.assemblies.schemas import (
     AssemblyCreate,
     AssemblyListResponse,
@@ -111,3 +112,39 @@ async def delete_assembly(
 ) -> None:
     """Delete assembly."""
     service.delete_assembly(db, assembly_id, tenant_id)
+
+
+@router.post(
+    "/{assembly_id}/units/preview",
+    summary="Preview CSV import",
+    dependencies=[Depends(require_property_manager)],
+)
+async def preview_units_import(
+    assembly_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant),
+) -> dict:
+    """Preview CSV import (first 10 lines + validation)."""
+    service.get_assembly(db, assembly_id, tenant_id)
+    return await preview_csv_import(file, assembly_id)
+
+
+@router.post(
+    "/{assembly_id}/units/import",
+    summary="Import units from CSV",
+    dependencies=[Depends(require_property_manager)],
+)
+async def import_units(
+    assembly_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant),
+) -> dict:
+    """Import units from CSV (creates immutable snapshot)."""
+    service.get_assembly(db, assembly_id, tenant_id)
+    units = await import_csv_units(db, file, assembly_id)
+    return {
+        "message": "Units imported successfully",
+        "total_imported": len(units),
+    }
