@@ -126,7 +126,7 @@ Instance Type: Free
 
 ```yaml
 # Build Command:
-pip install poetry && poetry config virtualenvs.create false && poetry install --no-dev
+pip install poetry && poetry config virtualenvs.create false && poetry install --without dev
 
 # Start Command:
 poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT
