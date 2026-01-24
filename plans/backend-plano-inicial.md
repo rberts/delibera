@@ -58,7 +58,7 @@ Organizar a execução do backend no repositório `delibera-api` (pasta na raiz)
 - [x] Ajustes de compatibilidade SQLite nos testes (UUID, constraints e pool).
 - [x] Testes críticos: auth, tenancy, voting, CSV.
 - [x] Documentacao do backend (README com PDF/SSE e deps).
-- [ ] Ajustes de índices/constraints.
+- [x] Ajustes de índices/constraints (revisao alinhada ao SPEC, sem gaps).
 - Verificação: suite crítica passando e cobertura mínima.
   - Teste sugerido: `pytest -q` e `pytest --cov`.
 
