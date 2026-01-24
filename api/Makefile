@@ -20,3 +20,6 @@ e2e:
 
 integration:
 	poetry run pytest tests/integration/test_realtime_notifications.py -q
+
+unit:
+	poetry run pytest tests/unit/test_auth_service.py tests/unit/test_dependencies.py tests/unit/test_tenancy.py tests/unit/test_csv_processor.py -q
