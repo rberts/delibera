@@ -8,6 +8,8 @@
 
 **Diretorio:** `web/` (monorepo)
 
+**Status atual:** scaffold inicial do Vite. O `package.json` atual usa `name: "vite-app"` e scripts basicos; a estrutura detalhada abaixo e o alvo da implementacao.
+
 ```
 web/
 ├── public/

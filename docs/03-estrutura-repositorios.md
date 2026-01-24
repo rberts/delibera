@@ -18,6 +18,8 @@ delibera/
     └── workflows/
 ```
 
+**Status atual:** `api/`, `web/`, `docs/`, `plans/` ja existem; a pasta `.github/workflows` ainda sera adicionada durante a configuracao de CI/CD.
+
 **Justificativa:**
 
 ✅ **Onboarding mais simples:**

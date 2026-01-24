@@ -264,6 +264,8 @@ pnpm run generate:types
 # Cria: src/types/api.ts
 ```
 
+**Nota:** No scaffold atual do `web/`, o script `generate:types` ainda nao existe; adiciona-lo quando a integracao com a API for iniciada.
+
 ### 5. Run Frontend
 
 ```bash

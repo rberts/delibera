@@ -4,6 +4,8 @@
 
 **Diretorio:** `api/` (monorepo)
 
+**Status atual:** scaffold inicial com `app/`, `alembic/`, `tests/`, `pyproject.toml` e `docker-compose.yml`. A estrutura detalhada abaixo e o alvo da implementacao; `Dockerfile` e `requirements.txt` serao adicionados quando a fase de deploy iniciar.
+
 ```
 api/
 ├── app/
