@@ -52,13 +52,14 @@ Organizar a execução do backend no repositório `delibera-api` (pasta na raiz)
 - Verificação: SSE respondendo e PDFs gerados.
   - Teste sugerido: assinar SSE em `/api/v1/realtime` e gerar relatórios via endpoints.
 
-### 7) Testes e hardening (parcial)
+### 7) Testes e hardening (concluido)
 - [x] Testes E2E (assembly flow) rodando em SQLite.
 - [x] Testes de integração para notificações SSE.
 - [x] Ajustes de compatibilidade SQLite nos testes (UUID, constraints e pool).
 - [x] Testes críticos: auth, tenancy, voting, CSV.
 - [x] Documentacao do backend (README com PDF/SSE e deps).
 - [x] Ajustes de índices/constraints (revisao alinhada ao SPEC, sem gaps).
+- [x] Cobertura minima (>= 60%) atingida.
 - Verificação: suite crítica passando e cobertura mínima.
   - Teste sugerido: `pytest -q` e `pytest --cov`.
 
