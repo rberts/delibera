@@ -17,3 +17,6 @@ test:
 
 e2e:
 	poetry run pytest tests/e2e/test_assembly_flow.py -q
+
+integration:
+	poetry run pytest tests/integration/test_realtime_notifications.py -q

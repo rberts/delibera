@@ -89,8 +89,9 @@ async def update_agenda(
 ) -> AgendaResponse:
     """Update agenda."""
     existing_agenda = service.get_agenda(db, agenda_id, tenant_id)
+    previous_status = existing_agenda.status
     db_agenda = service.update_agenda(db, agenda_id, agenda, tenant_id)
-    if db_agenda.status != existing_agenda.status:
+    if db_agenda.status != previous_status:
         await notify_agenda_status(db_agenda.assembly_id, db_agenda.id, db_agenda.status.value)
     return AgendaResponse.model_validate(db_agenda)
 

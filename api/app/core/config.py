@@ -2,10 +2,10 @@
 Application settings using Pydantic BaseSettings.
 Loads from environment variables with validation.
 """
-from typing import List, Any, Optional
+from typing import Any, List, Optional
 
+from pydantic import ConfigDict, field_validator
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -37,10 +37,11 @@ class Settings(BaseSettings):
     # File upload
     MAX_UPLOAD_SIZE_MB: int = 5
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
     @field_validator("CORS_ORIGINS", "ALLOWED_HOSTS", mode="before")
     @classmethod

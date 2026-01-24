@@ -5,6 +5,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
@@ -112,6 +113,7 @@ def cast_vote(
             agenda_id=agenda_id,
             assembly_unit_id=unit_id,
             option_id=option_id,
+            is_valid=True,
         )
         for unit_id in unit_ids
     ]
@@ -169,14 +171,14 @@ def calculate_quorum(db: Session, assembly_id: int, tenant_id: int) -> QuorumRes
     )
 
     present_unit_ids = (
-        db.query(QRCodeAssignedUnit.assembly_unit_id)
+        select(QRCodeAssignedUnit.assembly_unit_id)
         .join(QRCodeAssignment, QRCodeAssignedUnit.assignment_id == QRCodeAssignment.id)
         .filter(QRCodeAssignment.assembly_id == assembly_id)
         .distinct()
-        .subquery()
     )
 
-    units_present = db.query(func.count()).select_from(present_unit_ids).scalar() or 0
+    present_units_subquery = present_unit_ids.subquery()
+    units_present = db.query(func.count()).select_from(present_units_subquery).scalar() or 0
     fraction_present = (
         db.query(func.coalesce(func.sum(AssemblyUnit.ideal_fraction), 0.0))
         .filter(AssemblyUnit.id.in_(present_unit_ids))
@@ -200,14 +202,14 @@ def calculate_results(db: Session, agenda_id: int, tenant_id: int) -> AgendaResu
     assembly_id = agenda.assembly_id
 
     present_unit_ids = (
-        db.query(QRCodeAssignedUnit.assembly_unit_id)
+        select(QRCodeAssignedUnit.assembly_unit_id)
         .join(QRCodeAssignment, QRCodeAssignedUnit.assignment_id == QRCodeAssignment.id)
         .filter(QRCodeAssignment.assembly_id == assembly_id)
         .distinct()
-        .subquery()
     )
 
-    total_units_present = db.query(func.count()).select_from(present_unit_ids).scalar() or 0
+    present_units_subquery = present_unit_ids.subquery()
+    total_units_present = db.query(func.count()).select_from(present_units_subquery).scalar() or 0
     total_fraction_present = (
         db.query(func.coalesce(func.sum(AssemblyUnit.ideal_fraction), 0.0))
         .filter(AssemblyUnit.id.in_(present_unit_ids))

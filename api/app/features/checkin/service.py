@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from sqlalchemy.sql import func
 
 from app.core.enums import QRCodeStatus
@@ -229,14 +230,14 @@ def get_attendance_summary(db: Session, assembly_id: int, tenant_id: int) -> tup
     _get_assembly(db, assembly_id, tenant_id)
 
     present_unit_ids = (
-        db.query(QRCodeAssignedUnit.assembly_unit_id)
+        select(QRCodeAssignedUnit.assembly_unit_id)
         .join(QRCodeAssignment, QRCodeAssignedUnit.assignment_id == QRCodeAssignment.id)
         .filter(QRCodeAssignment.assembly_id == assembly_id)
         .distinct()
-        .subquery()
     )
 
-    units_present = db.query(func.count()).select_from(present_unit_ids).scalar() or 0
+    present_units_subquery = present_unit_ids.subquery()
+    units_present = db.query(func.count()).select_from(present_units_subquery).scalar() or 0
     fraction_present = (
         db.query(func.coalesce(func.sum(AssemblyUnit.ideal_fraction), 0.0))
         .filter(AssemblyUnit.id.in_(present_unit_ids))

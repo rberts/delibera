@@ -1,5 +1,5 @@
 """Security utilities for password hashing and JWT tokens."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -21,7 +21,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: int, tenant_id: int, role: str) -> str:
     """Create JWT access token for authenticated user."""
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": str(user_id),
         "tenant_id": tenant_id,
@@ -33,7 +33,7 @@ def create_access_token(user_id: int, tenant_id: int, role: str) -> str:
 
 def create_refresh_token(user_id: int) -> str:
     """Create JWT refresh token for token renewal."""
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {
         "sub": str(user_id),
         "exp": expire,
