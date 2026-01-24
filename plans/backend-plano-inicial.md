@@ -72,3 +72,8 @@ Organizar a execução do backend no repositório `delibera-api` (pasta na raiz)
 ## Observações
 - Implementar por fatias verticais quando possível.
 - Manter o SPEC atualizado se houver desvios.
+
+## Status atualizado (24/01/2026)
+- Backend em produção no Render.
+- Migrations automatizadas via GitHub Actions (Neon).
+- Deploy frontend em Vercel (sem workflow de testes, previsto para melhoria futura).
