@@ -23,3 +23,6 @@ integration:
 
 unit:
 	poetry run pytest tests/unit/test_auth_service.py tests/unit/test_dependencies.py tests/unit/test_tenancy.py tests/unit/test_csv_processor.py -q
+
+cov:
+	poetry run pytest --cov=app --cov-report=term-missing --cov-fail-under=60
