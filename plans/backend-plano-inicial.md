@@ -46,15 +46,18 @@ Organizar a execução do backend no repositório `delibera-api` (pasta na raiz)
 - Verificação: fluxo completo sem falhas críticas.
   - Teste sugerido: importar CSV, atribuir QR, abrir pauta e votar (com checagem de resultados).
 
-### 6) Realtime e relatórios
-- SSE para dashboards.
-- PDFs com WeasyPrint (presença, resultados, ata).
-- Verificação: endpoints respondendo e PDFs gerados.
+### 6) Realtime e relatórios (concluido)
+- [x] SSE para dashboards.
+- [x] PDFs com WeasyPrint (presença, resultados, ata).
+- Verificação: SSE respondendo e PDFs gerados.
   - Teste sugerido: assinar SSE em `/api/v1/realtime` e gerar relatórios via endpoints.
 
-### 7) Testes e hardening
-- Testes críticos: auth, tenancy, voting, CSV.
-- Ajustes de índices/constraints e documentação do backend.
+### 7) Testes e hardening (parcial)
+- [x] Testes E2E (assembly flow) rodando em SQLite.
+- [x] Testes de integração para notificações SSE.
+- [x] Ajustes de compatibilidade SQLite nos testes (UUID, constraints e pool).
+- [ ] Testes críticos: auth, tenancy, voting, CSV.
+- [ ] Ajustes de índices/constraints e documentação do backend.
 - Verificação: suite crítica passando e cobertura mínima.
   - Teste sugerido: `pytest -q` e `pytest --cov`.
 

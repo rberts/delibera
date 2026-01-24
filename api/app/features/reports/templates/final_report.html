@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatorio Final - {{ assembly_title }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 2cm;
+      @bottom-right {
+        content: "Pagina " counter(page) " de " counter(pages);
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+
+    h1, h2 {
+      margin: 0;
+      color: #333;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 12px;
+    }
+
+    .header p {
+      margin: 4px 0;
+      color: #666;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .summary {
+      background-color: #f5f5f5;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+
+    .summary-label {
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th {
+      background-color: #333;
+      color: #fff;
+      padding: 8px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Relatorio Final</h1>
+    <p><strong>{{ condominium_name }}</strong></p>
+    <p>{{ condominium_address }}</p>
+    <p>{{ assembly_title }}</p>
+    <p>{{ assembly_date }} - {{ assembly_location }}</p>
+    <p>Tipo: {{ assembly_type }}</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <span class="summary-label">Total de Unidades:</span>
+      <span>{{ total_units }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Unidades Presentes:</span>
+      <span>{{ units_present }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Fracao Presente:</span>
+      <span>{{ fraction_present }}%</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Quorum:</span>
+      <span>{{ "ATINGIDO" if quorum_reached else "NAO ATINGIDO" }}</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Presenca</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>QR Code</th>
+          <th>Unidade(s)</th>
+          <th>Proprietario</th>
+          <th>Fracao Ideal</th>
+          <th>Procuracao</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in attendance %}
+        <tr>
+          <td>{{ item.qr_visual_number }}</td>
+          <td>
+            {% for unit in item.units %}
+              {{ unit.unit_number }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+          <td>{{ item.owner_names | join(', ') }}</td>
+          <td>{{ item.total_fraction }}%</td>
+          <td>{{ "(P)" if item.is_proxy else "-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Resultados das Pautas</h2>
+    {% for agenda in agendas %}
+      <h3>{{ agenda.title }}</h3>
+      {% if agenda.description %}
+        <p>{{ agenda.description }}</p>
+      {% endif %}
+      <p>Status: {{ agenda.status }}</p>
+      <p>Unidades votantes: {{ agenda.total_units_voted }} | Fracao votada: {{ agenda.total_fraction_voted }}%</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Opcao</th>
+            <th>Votos</th>
+            <th>Fracao</th>
+            <th>Percentual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for option in agenda.results %}
+          <tr>
+            <td>{{ option.option_text }}</td>
+            <td>{{ option.votes_count }}</td>
+            <td>{{ option.fraction_sum }}%</td>
+            <td>{{ option.percentage }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </div>
+
+  <div class="footer">
+    <p>Documento gerado em {{ generated_at }}</p>
+  </div>
+</body>
+</html>

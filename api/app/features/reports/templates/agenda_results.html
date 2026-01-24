@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Resultado da Pauta - {{ agenda_title }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 2cm;
+      @bottom-right {
+        content: "Pagina " counter(page) " de " counter(pages);
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 12px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18pt;
+      color: #333;
+    }
+
+    .header p {
+      margin: 4px 0;
+      color: #666;
+    }
+
+    .summary {
+      background-color: #f5f5f5;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+    }
+
+    .summary-label {
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    th {
+      background-color: #333;
+      color: #fff;
+      padding: 8px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Resultado da Pauta</h1>
+    <p><strong>{{ condominium_name }}</strong></p>
+    <p>{{ assembly_title }}</p>
+    <p>{{ assembly_date }}</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <span class="summary-label">Pauta:</span>
+      <span>{{ agenda_title }}</span>
+    </div>
+    {% if agenda_description %}
+    <div class="summary-row">
+      <span class="summary-label">Descricao:</span>
+      <span>{{ agenda_description }}</span>
+    </div>
+    {% endif %}
+    <div class="summary-row">
+      <span class="summary-label">Unidades Presentes:</span>
+      <span>{{ total_units_present }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Unidades Votantes:</span>
+      <span>{{ total_units_voted }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Fracao Presente:</span>
+      <span>{{ total_fraction_present }}%</span>
+    </div>
+    <div class="summary-row">
+      <span class="summary-label">Fracao Votada:</span>
+      <span>{{ total_fraction_voted }}%</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Opcao</th>
+        <th>Votos</th>
+        <th>Fracao</th>
+        <th>Percentual</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for option in results %}
+      <tr>
+        <td>{{ option.option_text }}</td>
+        <td>{{ option.votes_count }}</td>
+        <td>{{ option.fraction_sum }}%</td>
+        <td>{{ option.percentage }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>Documento gerado em {{ generated_at }}</p>
+  </div>
+</body>
+</html>
