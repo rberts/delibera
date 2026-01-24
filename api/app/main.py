@@ -18,6 +18,7 @@ from app.features.checkin.router import router as checkin_router
 from app.features.qr_codes.router import router as qr_codes_router
 from app.features.users.router import router as users_router
 from app.features.voting.router import router as voting_router
+from app.features.realtime.sse import router as realtime_router
 from app import models  # noqa: F401
 
 app = FastAPI(
@@ -83,6 +84,11 @@ app.include_router(
     checkin_router,
     prefix=f"{API_V1_PREFIX}/checkin",
     tags=["Check-in"],
+)
+app.include_router(
+    realtime_router,
+    prefix=f"{API_V1_PREFIX}/realtime",
+    tags=["Real-time"],
 )
 
 

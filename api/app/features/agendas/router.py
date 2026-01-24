@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_tenant, require_property_manager
 from app.features.agendas import service
+from app.features.realtime.sse import notify_agenda_status
 from app.features.agendas.schemas import AgendaCreate, AgendaListResponse, AgendaResponse, AgendaUpdate
 
 router = APIRouter()
@@ -87,7 +88,10 @@ async def update_agenda(
     tenant_id: int = Depends(get_current_tenant),
 ) -> AgendaResponse:
     """Update agenda."""
+    existing_agenda = service.get_agenda(db, agenda_id, tenant_id)
     db_agenda = service.update_agenda(db, agenda_id, agenda, tenant_id)
+    if db_agenda.status != existing_agenda.status:
+        await notify_agenda_status(db_agenda.assembly_id, db_agenda.id, db_agenda.status.value)
     return AgendaResponse.model_validate(db_agenda)
 
 

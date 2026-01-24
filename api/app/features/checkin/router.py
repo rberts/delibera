@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_tenant, get_current_user, require_operator_or_manager
 from app.features.checkin import service
+from app.features.realtime.sse import notify_checkin
 from app.features.checkin.schemas import (
     AttendanceListResponse,
     CheckInRequest,
@@ -41,6 +42,8 @@ async def checkin(
         current_user.id,
         tenant_id,
     )
+    units_present, fraction_present = service.get_attendance_summary(db, assembly_id, tenant_id)
+    await notify_checkin(assembly_id, units_present, fraction_present)
     return CheckInResponse.model_validate(assignment)
 
 
@@ -56,7 +59,9 @@ async def undo_checkin(
     tenant_id: int = Depends(get_current_tenant),
 ) -> None:
     """Remove QR code assignment (undo check-in)."""
-    service.unassign_qr_code(db, assignment_id, tenant_id)
+    assembly_id = service.unassign_qr_code(db, assignment_id, tenant_id)
+    units_present, fraction_present = service.get_attendance_summary(db, assembly_id, tenant_id)
+    await notify_checkin(assembly_id, units_present, fraction_present)
 
 
 @router.get(

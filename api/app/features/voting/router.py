@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_tenant, get_current_user, require_operator_or_manager
+from app.features.agendas import service as agendas_service
+from app.features.realtime.sse import notify_vote_cast
 from app.features.voting import service
+from app.features.voting.models import Vote
 from app.features.voting.schemas import (
     AgendaResultsResponse,
     QuorumResponse,
@@ -35,6 +38,16 @@ async def cast_vote(
         payload.option_id,
         tenant_id,
     )
+    agenda = agendas_service.get_agenda(db, payload.agenda_id, tenant_id)
+    votes_count = (
+        db.query(Vote)
+        .filter(
+            Vote.agenda_id == payload.agenda_id,
+            Vote.is_valid.is_(True),
+        )
+        .count()
+    )
+    await notify_vote_cast(agenda.assembly_id, payload.agenda_id, votes_count)
     return VoteCastResponse(
         agenda_id=payload.agenda_id,
         option_id=payload.option_id,

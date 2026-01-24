@@ -125,7 +125,7 @@ def assign_qr_code(
     return assignment
 
 
-def unassign_qr_code(db: Session, assignment_id: int, tenant_id: int) -> None:
+def unassign_qr_code(db: Session, assignment_id: int, tenant_id: int) -> int:
     """Undo check-in (remove QR assignment)."""
     assignment = (
         db.query(QRCodeAssignment)
@@ -140,6 +140,7 @@ def unassign_qr_code(db: Session, assignment_id: int, tenant_id: int) -> None:
     if not assignment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
 
+    assembly_id = assignment.assembly_id
     assigned_units = (
         db.query(QRCodeAssignedUnit.assembly_unit_id)
         .filter(QRCodeAssignedUnit.assignment_id == assignment_id)
@@ -160,6 +161,7 @@ def unassign_qr_code(db: Session, assignment_id: int, tenant_id: int) -> None:
 
     db.delete(assignment)
     db.commit()
+    return assembly_id
 
 
 def get_attendance_list(db: Session, assembly_id: int, tenant_id: int) -> list[dict]:
@@ -220,6 +222,28 @@ def get_attendance_list(db: Session, assembly_id: int, tenant_id: int) -> list[d
         item["total_fraction"] += float(ideal_fraction)
 
     return list(items.values())
+
+
+def get_attendance_summary(db: Session, assembly_id: int, tenant_id: int) -> tuple[int, float]:
+    """Return units present and fraction present for SSE updates."""
+    _get_assembly(db, assembly_id, tenant_id)
+
+    present_unit_ids = (
+        db.query(QRCodeAssignedUnit.assembly_unit_id)
+        .join(QRCodeAssignment, QRCodeAssignedUnit.assignment_id == QRCodeAssignment.id)
+        .filter(QRCodeAssignment.assembly_id == assembly_id)
+        .distinct()
+        .subquery()
+    )
+
+    units_present = db.query(func.count()).select_from(present_unit_ids).scalar() or 0
+    fraction_present = (
+        db.query(func.coalesce(func.sum(AssemblyUnit.ideal_fraction), 0.0))
+        .filter(AssemblyUnit.id.in_(present_unit_ids))
+        .scalar()
+        or 0.0
+    )
+    return units_present, float(fraction_present)
 
 
 def select_units_by_owner(
