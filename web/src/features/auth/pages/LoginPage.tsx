@@ -22,7 +22,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { login, isLoggingIn, isAuthenticated } = useAuth();
+  const { login, isLoggingIn, isAuthenticated, isLoadingUser } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -39,10 +39,10 @@ export function LoginPage() {
 
   // Se já autenticado, redirecionar
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoadingUser && isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isLoadingUser, navigate]);
 
   const onSubmit = (data: LoginFormData) => {
     login(data);

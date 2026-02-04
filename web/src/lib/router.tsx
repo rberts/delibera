@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Layout } from '@/components/layout/Layout';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // Páginas stub para rotas futuras
 function NotFoundPage() {
@@ -32,11 +33,29 @@ function ComingSoonPage({ title }: { title: string }) {
   );
 }
 
+function RootRedirect() {
+  const { isAuthenticated, isLoadingUser } = useAuth();
+
+  if (isLoadingUser) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-sm text-gray-600">Carregando...</div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? (
+    <Navigate to="/dashboard" replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+}
+
 export const router = createBrowserRouter([
-  // Rota raiz - redireciona para dashboard
+  // Rota raiz - redireciona baseado em autenticação
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <RootRedirect />,
   },
 
   // Rotas públicas
