@@ -8,6 +8,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Layout } from '@/components/layout/Layout';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import CondominiumsList from '@/features/condominiums/pages/CondominiumsList';
+import CondominiumForm from '@/features/condominiums/pages/CondominiumForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // Páginas stub para rotas futuras
@@ -78,15 +80,15 @@ export const router = createBrowserRouter([
       },
       {
         path: '/condominiums',
-        element: <ComingSoonPage title="Condomínios" />,
+        element: <CondominiumsList />,
       },
       {
         path: '/condominiums/new',
-        element: <ComingSoonPage title="Novo Condomínio" />,
+        element: <CondominiumForm />,
       },
       {
         path: '/condominiums/:id/edit',
-        element: <ComingSoonPage title="Editar Condomínio" />,
+        element: <CondominiumForm />,
       },
       {
         path: '/assemblies',
