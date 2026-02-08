@@ -251,7 +251,12 @@ Edite `.env`:
 ```bash
 # API URL (backend)
 VITE_API_URL=http://localhost:8000
+
+# Public URL used inside generated QR Codes
+VITE_PUBLIC_APP_URL=http://localhost:5173
 ```
+
+**Regra de fallback:** se `VITE_PUBLIC_APP_URL` nao for definida, o frontend usa `window.location.origin` para montar `{base}/vote/{token}`.
 
 ### 4. Generate TypeScript Types
 

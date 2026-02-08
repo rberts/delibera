@@ -1703,18 +1703,32 @@ const handleGenerate = () => {
 />
 ```
 
-2. **Download de QR Code:**
+2. **Conteúdo do QR Code (URL completa):**
 ```typescript
-// Link direto para download
-<Button
-  onClick={() => window.open(`/api/v1/qr-codes/${qr.id}/download`, '_blank')}
->
-  <Download className="mr-2 h-4 w-4" />
-  Download PNG
-</Button>
+// src/lib/qr-url.ts
+export function buildVotingUrl(token: string): string {
+  const configuredBase = import.meta.env.VITE_PUBLIC_APP_URL?.trim()
+  const base = configuredBase && configuredBase.length > 0
+    ? configuredBase
+    : window.location.origin
+
+  const normalizedBase = base.replace(/\/+$/, '')
+  return `${normalizedBase}/vote/${token}`
+}
+
+<QRCodeCanvas value={buildVotingUrl(qr.token)} />
 ```
 
-3. **Visual Number Display:**
+3. **Download de QR Code:**
+```typescript
+const canvas = document.getElementById(`qr-canvas-${qr.id}`) as HTMLCanvasElement
+const link = document.createElement('a')
+link.href = canvas.toDataURL('image/png')
+link.download = `qr-${String(qr.visual_number).padStart(3, '0')}.png`
+link.click()
+```
+
+4. **Visual Number Display:**
 ```typescript
 // Exibir número visual formatado
 <span className="font-mono text-lg">

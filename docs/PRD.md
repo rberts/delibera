@@ -141,7 +141,8 @@ Sistema multi-tenant que permite administradoras de condomínio gerenciar assemb
 - Admin pode gerar QR Codes com:
   - Token único (UUID v4 - imprevisível)
   - Número visual sequencial (para organização física)
-  - URL: `https://app.com/vote/{token}`
+  - URL completa de votação: `{APP_BASE_URL}/vote/{token}`
+  - `APP_BASE_URL` deve ser configurável por ambiente (local, staging, produção)
 - Gerar múltiplos QR Codes de uma vez
 - Download individual (PNG) ou lote (PDF)
 
@@ -713,22 +714,23 @@ INDEX(is_active)
 
 **Fluxo Principal:**
 1. Condômino escaneia QR Code físico com celular
-2. Sistema abre tela de votação automaticamente
-3. Condômino vê:
+2. QR Code abre URL completa de votação (`{APP_BASE_URL}/vote/{token}`)
+3. Sistema abre tela de votação automaticamente
+4. Condômino vê:
    - Nome da assembleia
    - Suas unidades vinculadas
    - Pauta aberta com descrição
    - Opções de voto
-4. Condômino seleciona opção (radio button)
-5. Clica "Confirmar Voto"
-6. Sistema valida e registra voto
-7. Exibe "Voto registrado com sucesso!"
-8. Aguarda próxima pauta
+5. Condômino seleciona opção (radio button)
+6. Clica "Confirmar Voto"
+7. Sistema valida e registra voto
+8. Exibe "Voto registrado com sucesso!"
+9. Aguarda próxima pauta
 
-**Fluxo Alternativo 3a:** Nenhuma pauta aberta
+**Fluxo Alternativo 4a:** Nenhuma pauta aberta
 - Exibe "Aguardando próxima votação..."
 
-**Fluxo Alternativo 6a:** Conexão falhou
+**Fluxo Alternativo 7a:** Conexão falhou
 - Sistema tenta reenviar automaticamente (3x)
 - Exibe feedback "Enviando... tentativa 2/3"
 - Se falhar, pede para chamar secretário

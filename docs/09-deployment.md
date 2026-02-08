@@ -263,6 +263,9 @@ Install Command: pnpm install
 # API URL (Render backend)
 VITE_API_URL=https://assembly-voting-api.onrender.com
 
+# Public app URL used in generated QR Codes
+VITE_PUBLIC_APP_URL=https://assembly-voting.vercel.app
+
 # Optional: Analytics
 VITE_ANALYTICS_ID=...
 
@@ -456,6 +459,7 @@ jobs:
         run: pnpm build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_PUBLIC_APP_URL: ${{ secrets.VITE_PUBLIC_APP_URL }}
   
   deploy:
     needs: test

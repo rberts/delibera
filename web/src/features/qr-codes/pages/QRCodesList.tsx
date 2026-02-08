@@ -45,6 +45,7 @@ import {
 import { GenerateQRDialog } from '../components/GenerateQRDialog';
 import { useDeleteQRCode, useGenerateQRCodes, useQRCodes } from '../hooks/useQRCodes';
 import type { QRCodeResponse } from '@/types/api';
+import { buildVotingUrl } from '@/lib/qr-url';
 
 function formatVisualNumber(value: number) {
   return String(value).padStart(3, '0');
@@ -220,7 +221,7 @@ export default function QRCodesList() {
                     </TooltipProvider>
                     <QRCodeCanvas
                       id={`qr-canvas-${qrCode.id}`}
-                      value={qrCode.token}
+                      value={buildVotingUrl(qrCode.token)}
                       size={256}
                       className="hidden"
                       includeMargin
@@ -274,9 +275,9 @@ export default function QRCodesList() {
 
           {previewQRCode && (
             <div className="flex flex-col items-center gap-4 py-2">
-              <QRCodeCanvas value={previewQRCode.token} size={280} includeMargin />
+              <QRCodeCanvas value={buildVotingUrl(previewQRCode.token)} size={280} includeMargin />
               <p className="max-w-full truncate font-mono text-xs text-muted-foreground">
-                {previewQRCode.token}
+                {buildVotingUrl(previewQRCode.token)}
               </p>
               <Button onClick={() => downloadQRCode(previewQRCode)}>
                 <Download className="mr-2 h-4 w-4" />
