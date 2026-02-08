@@ -21,13 +21,18 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-export function useCondominiums(page = 1, pageSize = 20) {
+export function useCondominiums(
+  page = 1,
+  pageSize = 20,
+  status: 'active' | 'inactive' = 'active'
+) {
   return useQuery({
-    queryKey: ['condominiums', { page, pageSize }],
+    queryKey: ['condominiums', { page, pageSize, status }],
     queryFn: () =>
       api.get<PaginatedResponse<CondominiumResponse>>('/api/v1/condominiums', {
         page,
         page_size: pageSize,
+        status,
       }),
   });
 }

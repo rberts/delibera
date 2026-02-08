@@ -10,6 +10,9 @@ import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import CondominiumsList from '@/features/condominiums/pages/CondominiumsList';
 import CondominiumForm from '@/features/condominiums/pages/CondominiumForm';
+import AssembliesList from '@/features/assemblies/pages/AssembliesList';
+import AssemblyForm from '@/features/assemblies/pages/AssemblyForm';
+import AssemblyDetails from '@/features/assemblies/pages/AssemblyDetails';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // Páginas stub para rotas futuras
@@ -92,19 +95,19 @@ export const router = createBrowserRouter([
       },
       {
         path: '/assemblies',
-        element: <ComingSoonPage title="Assembleias" />,
+        element: <AssembliesList />,
       },
       {
         path: '/assemblies/new',
-        element: <ComingSoonPage title="Nova Assembleia" />,
+        element: <AssemblyForm />,
       },
       {
         path: '/assemblies/:id',
-        element: <ComingSoonPage title="Detalhes da Assembleia" />,
+        element: <AssemblyDetails />,
       },
       {
         path: '/assemblies/:id/edit',
-        element: <ComingSoonPage title="Editar Assembleia" />,
+        element: <AssemblyForm />,
       },
       {
         path: '/assemblies/:id/checkin',

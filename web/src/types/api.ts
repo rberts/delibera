@@ -20,8 +20,10 @@ export interface UserResponse {
 // ============= Condominium =============
 export interface CondominiumResponse {
   id: number;
+  tenant_id: number;
   name: string;
   address: string;
+  status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
 }
@@ -37,28 +39,39 @@ export interface CondominiumUpdate {
 }
 
 // ============= Assembly =============
-export type AssemblyStatus = 'draft' | 'in_progress' | 'finished';
+export type AssemblyStatus = 'draft' | 'in_progress' | 'finished' | 'cancelled';
+export type AssemblyType = 'ordinary' | 'extraordinary';
 
 export interface AssemblyResponse {
   id: number;
   title: string;
   condominium_id: number;
-  scheduled_date: string;
+  operator_id?: number | null;
+  assembly_date: string;
+  location: string;
+  assembly_type: AssemblyType;
   status: AssemblyStatus;
   created_at: string;
   updated_at: string;
-  condominium?: CondominiumResponse;
 }
 
 export interface AssemblyCreate {
   title: string;
   condominium_id: number;
-  scheduled_date: string;
+  operator_id?: number | null;
+  assembly_date: string;
+  location: string;
+  assembly_type: AssemblyType;
 }
 
 export interface AssemblyUpdate {
+  condominium_id?: number;
+  operator_id?: number | null;
   title?: string;
-  scheduled_date?: string;
+  assembly_date?: string;
+  location?: string;
+  assembly_type?: AssemblyType;
+  status?: AssemblyStatus;
 }
 
 // ============= Unit =============
