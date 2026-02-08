@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Eye, Plus, Trash2, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +62,21 @@ function getStatusBadge(status: 'active' | 'inactive') {
     return <Badge variant="default">Ativo</Badge>;
   }
   return <Badge variant="outline">Inativo</Badge>;
+}
+
+function ActionTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 export default function QRCodesList() {
@@ -176,19 +197,27 @@ export default function QRCodesList() {
                   <TableCell>{getStatusBadge(qrCode.status)}</TableCell>
                   <TableCell>{formatDate(qrCode.created_at)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => setPreviewQRCode(qrCode)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => downloadQRCode(qrCode)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      {qrCode.status === 'active' && (
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(qrCode.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    <TooltipProvider>
+                      <div className="flex gap-1">
+                        <ActionTooltip label="Visualizar QR Code">
+                          <Button variant="ghost" size="icon" onClick={() => setPreviewQRCode(qrCode)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                        <ActionTooltip label="Download PNG">
+                          <Button variant="ghost" size="icon" onClick={() => downloadQRCode(qrCode)}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                        {qrCode.status === 'active' && (
+                          <ActionTooltip label="Desativar QR Code">
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(qrCode.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
                     <QRCodeCanvas
                       id={`qr-canvas-${qrCode.id}`}
                       value={qrCode.token}
