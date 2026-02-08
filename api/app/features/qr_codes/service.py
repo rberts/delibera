@@ -1,7 +1,6 @@
 """Business logic for QR code CRUD operations."""
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 
 from app.core.enums import QRCodeStatus
 from app.features.qr_codes.models import QRCode
@@ -21,11 +20,10 @@ def create_qr_code(db: Session, qr_code: QRCodeCreate, tenant_id: int) -> QRCode
 
 
 def get_qr_code(db: Session, qr_code_id: int, tenant_id: int) -> QRCode:
-    """Get QR code by ID (tenant isolated, excluding deleted)."""
+    """Get QR code by ID (tenant isolated)."""
     qr_code = db.query(QRCode).filter(
         QRCode.id == qr_code_id,
         QRCode.tenant_id == tenant_id,
-        QRCode.deleted_at.is_(None),
     ).first()
 
     if not qr_code:
@@ -41,10 +39,9 @@ def list_qr_codes(
     limit: int = 100,
     status_filter: QRCodeStatus = QRCodeStatus.active,
 ) -> tuple[list[QRCode], int]:
-    """List QR codes with pagination (tenant isolated, excluding deleted)."""
+    """List QR codes with pagination (tenant isolated)."""
     query = db.query(QRCode).filter(
         QRCode.tenant_id == tenant_id,
-        QRCode.deleted_at.is_(None),
         QRCode.status == status_filter,
     )
     total = query.count()
@@ -74,11 +71,9 @@ def update_qr_code(db: Session, qr_code_id: int, qr_code_update: QRCodeUpdate, t
 
 
 def delete_qr_code(db: Session, qr_code_id: int, tenant_id: int) -> None:
-    """Deactivate QR code (soft delete)."""
+    """Deactivate QR code by status change."""
     qr_code = get_qr_code(db, qr_code_id, tenant_id)
     if qr_code.status == QRCodeStatus.inactive:
         return
     qr_code.status = QRCodeStatus.inactive
-    if qr_code.deleted_at is None:
-        qr_code.deleted_at = func.now()
     db.commit()
