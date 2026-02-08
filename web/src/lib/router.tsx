@@ -13,6 +13,7 @@ import CondominiumForm from '@/features/condominiums/pages/CondominiumForm';
 import AssembliesList from '@/features/assemblies/pages/AssembliesList';
 import AssemblyForm from '@/features/assemblies/pages/AssemblyForm';
 import AssemblyDetails from '@/features/assemblies/pages/AssemblyDetails';
+import QRCodesList from '@/features/qr-codes/pages/QRCodesList';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // Páginas stub para rotas futuras
@@ -119,7 +120,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/qr-codes',
-        element: <ComingSoonPage title="QR Codes" />,
+        element: <QRCodesList />,
       },
     ],
   },

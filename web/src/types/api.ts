@@ -90,21 +90,20 @@ export interface UnitCreate {
 }
 
 // ============= QR Code =============
-export type QRCodeStatus = 'available' | 'assigned' | 'used';
+export type QRCodeStatus = 'active' | 'inactive';
 
 export interface QRCodeResponse {
   id: number;
-  assembly_id: number;
+  tenant_id: number;
   token: string;
-  visual_number: string;
+  visual_number: number;
   status: QRCodeStatus;
   created_at: string;
-  assigned_at?: string;
-  used_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface QRCodeGenerateRequest {
-  assembly_id: number;
+  start_visual_number: number;
   quantity: number;
 }
 
