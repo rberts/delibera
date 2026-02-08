@@ -14,6 +14,7 @@ import AssembliesList from '@/features/assemblies/pages/AssembliesList';
 import AssemblyForm from '@/features/assemblies/pages/AssemblyForm';
 import AssemblyDetails from '@/features/assemblies/pages/AssemblyDetails';
 import QRCodesList from '@/features/qr-codes/pages/QRCodesList';
+import VotingPage from '@/features/voting/pages/VotingPage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // Páginas stub para rotas futuras
@@ -128,7 +129,7 @@ export const router = createBrowserRouter([
   // Rota pública de votação (sem layout)
   {
     path: '/vote/:token',
-    element: <ComingSoonPage title="Votação" />,
+    element: <VotingPage />,
   },
 
   // 404
