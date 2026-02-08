@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit, Eye, Play, Plus, Square, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AssemblyStatusBadge } from '../components/AssemblyStatusBadge';
 import {
   useAssemblies,
@@ -44,6 +50,21 @@ function formatDate(value: string) {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+}
+
+function ActionTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 export default function AssembliesList() {
@@ -155,51 +176,63 @@ export default function AssembliesList() {
                     <AssemblyStatusBadge status={assembly.status} />
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/assemblies/${assembly.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                    <TooltipProvider>
+                      <div className="flex gap-1">
+                        <ActionTooltip label="Ver detalhes">
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/assemblies/${assembly.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </ActionTooltip>
 
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to={`/assemblies/${assembly.id}/edit`}>
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                      </Button>
+                        <ActionTooltip label="Editar assembleia">
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/assemblies/${assembly.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </ActionTooltip>
 
-                      {assembly.status === 'draft' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startMutation.mutate(assembly.id)}
-                          disabled={startMutation.isPending}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                      )}
+                        {assembly.status === 'draft' && (
+                          <ActionTooltip label="Iniciar assembleia">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => startMutation.mutate(assembly.id)}
+                              disabled={startMutation.isPending}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                        )}
 
-                      {assembly.status === 'in_progress' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => finishMutation.mutate(assembly.id)}
-                          disabled={finishMutation.isPending}
-                        >
-                          <Square className="h-4 w-4" />
-                        </Button>
-                      )}
+                        {assembly.status === 'in_progress' && (
+                          <ActionTooltip label="Finalizar assembleia">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => finishMutation.mutate(assembly.id)}
+                              disabled={finishMutation.isPending}
+                            >
+                              <Square className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                        )}
 
-                      {assembly.status !== 'cancelled' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteId(assembly.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                        {assembly.status !== 'cancelled' && (
+                          <ActionTooltip label="Cancelar assembleia">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(assembly.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                        )}
+                      </div>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))
