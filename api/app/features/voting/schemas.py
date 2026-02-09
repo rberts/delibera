@@ -14,6 +14,61 @@ class VoteCastRequest(BaseModel):
     option_id: int
 
 
+class VotingStatusUnitResponse(BaseModel):
+    """Schema for units linked to the scanned QR code."""
+
+    id: int
+    unit_number: str
+    owner_name: str
+
+
+class VotingStatusOptionResponse(BaseModel):
+    """Schema for option displayed on public voting screen."""
+
+    id: int
+    agenda_id: int
+    option_text: str
+    display_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VotingStatusAgendaResponse(BaseModel):
+    """Schema for currently open agenda on public voting screen."""
+
+    id: int
+    assembly_id: int
+    title: str
+    description: Optional[str] = None
+    status: str
+    display_order: int
+    options: List[VotingStatusOptionResponse]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VotingStatusAssemblyResponse(BaseModel):
+    """Schema for assembly info shown on public voting screen."""
+
+    id: int
+    title: str
+    assembly_date: datetime
+    location: str
+    assembly_type: str
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class VotingStatusResponse(BaseModel):
+    """Schema for QR token voting status."""
+
+    assembly: VotingStatusAssemblyResponse
+    agenda: Optional[VotingStatusAgendaResponse] = None
+    units: List[VotingStatusUnitResponse]
+    has_voted: bool
+
+
 class VoteResponse(BaseModel):
     """Schema for vote response."""
 

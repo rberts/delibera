@@ -17,7 +17,16 @@ from app.features.checkin.models import QRCodeAssignedUnit, QRCodeAssignment
 from app.features.condominiums.models import Condominium
 from app.features.qr_codes.models import QRCode
 from app.features.voting.models import Vote
-from app.features.voting.schemas import AgendaResultsResponse, OptionResult, QuorumResponse
+from app.features.voting.schemas import (
+    AgendaResultsResponse,
+    OptionResult,
+    QuorumResponse,
+    VotingStatusAgendaResponse,
+    VotingStatusAssemblyResponse,
+    VotingStatusOptionResponse,
+    VotingStatusResponse,
+    VotingStatusUnitResponse,
+)
 
 
 def _get_agenda(db: Session, agenda_id: int, tenant_id: int) -> Agenda:
@@ -50,9 +59,23 @@ def _get_option(db: Session, agenda_id: int, option_id: int) -> AgendaOption:
     return option
 
 
+def get_qr_code_for_voting(db: Session, qr_token: UUID) -> QRCode:
+    """Resolve QR code for public voting flow."""
+    qr_code = db.query(QRCode).filter(QRCode.token == qr_token).first()
+    if not qr_code:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR Code invalido")
+
+    if qr_code.status != QRCodeStatus.active or qr_code.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="QR Code desativado. Procure o administrador",
+        )
+    return qr_code
+
+
 def _get_assignment(
     db: Session,
-    qr_token: UUID,
+    qr_code_id: int,
     assembly_id: int,
     tenant_id: int,
 ) -> QRCodeAssignment:
@@ -60,17 +83,117 @@ def _get_assignment(
         db.query(QRCodeAssignment)
         .join(QRCode, QRCodeAssignment.qr_code_id == QRCode.id)
         .filter(
-            QRCode.token == qr_token,
+            QRCode.id == qr_code_id,
             QRCode.tenant_id == tenant_id,
-            QRCode.deleted_at.is_(None),
             QRCode.status == QRCodeStatus.active,
             QRCodeAssignment.assembly_id == assembly_id,
         )
         .first()
     )
     if not assignment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR code not assigned to assembly")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aguardando check-in. Procure o secretario",
+        )
     return assignment
+
+
+def get_voting_status(db: Session, qr_token: UUID) -> VotingStatusResponse:
+    """Get public voting status by QR token."""
+    qr_code = get_qr_code_for_voting(db, qr_token)
+
+    assignment = (
+        db.query(QRCodeAssignment)
+        .join(Assembly, QRCodeAssignment.assembly_id == Assembly.id)
+        .join(Condominium, Assembly.condominium_id == Condominium.id)
+        .filter(
+            QRCodeAssignment.qr_code_id == qr_code.id,
+            Condominium.tenant_id == qr_code.tenant_id,
+        )
+        .first()
+    )
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Aguardando check-in. Procure o secretario",
+        )
+
+    assembly = (
+        db.query(Assembly)
+        .join(Condominium, Assembly.condominium_id == Condominium.id)
+        .filter(
+            Assembly.id == assignment.assembly_id,
+            Condominium.tenant_id == qr_code.tenant_id,
+        )
+        .first()
+    )
+    if not assembly:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assembly not found")
+
+    agenda = (
+        db.query(Agenda)
+        .filter(
+            Agenda.assembly_id == assembly.id,
+            Agenda.status == AgendaStatus.open,
+        )
+        .order_by(Agenda.display_order.asc(), Agenda.opened_at.asc())
+        .first()
+    )
+
+    rows = (
+        db.query(
+            AssemblyUnit.id,
+            AssemblyUnit.unit_number,
+            AssemblyUnit.owner_name,
+        )
+        .join(QRCodeAssignedUnit, QRCodeAssignedUnit.assembly_unit_id == AssemblyUnit.id)
+        .filter(QRCodeAssignedUnit.assignment_id == assignment.id)
+        .order_by(AssemblyUnit.unit_number.asc())
+        .all()
+    )
+    units = [
+        VotingStatusUnitResponse(id=row[0], unit_number=row[1], owner_name=row[2])
+        for row in rows
+    ]
+
+    has_voted = False
+    agenda_payload = None
+    if agenda:
+        unit_ids = [unit.id for unit in units]
+        if unit_ids:
+            has_voted = (
+                db.query(Vote)
+                .filter(
+                    Vote.agenda_id == agenda.id,
+                    Vote.assembly_unit_id.in_(unit_ids),
+                    Vote.is_valid.is_(True),
+                )
+                .first()
+                is not None
+            )
+
+        options = (
+            db.query(AgendaOption)
+            .filter(AgendaOption.agenda_id == agenda.id)
+            .order_by(AgendaOption.display_order.asc())
+            .all()
+        )
+        agenda_payload = VotingStatusAgendaResponse(
+            id=agenda.id,
+            assembly_id=agenda.assembly_id,
+            title=agenda.title,
+            description=agenda.description,
+            status=agenda.status.value,
+            display_order=agenda.display_order,
+            options=[VotingStatusOptionResponse.model_validate(option) for option in options],
+        )
+
+    return VotingStatusResponse(
+        assembly=VotingStatusAssemblyResponse.model_validate(assembly),
+        agenda=agenda_payload,
+        units=units,
+        has_voted=has_voted,
+    )
 
 
 def cast_vote(
@@ -81,12 +204,13 @@ def cast_vote(
     tenant_id: int,
 ) -> List[int]:
     """Cast a vote for all units linked to a QR code."""
+    qr_code = get_qr_code_for_voting(db, qr_token)
     agenda = _get_agenda(db, agenda_id, tenant_id)
     if agenda.status != AgendaStatus.open:
         raise AgendaNotOpenError(agenda.status.value)
 
     _get_option(db, agenda_id, option_id)
-    assignment = _get_assignment(db, qr_token, agenda.assembly_id, tenant_id)
+    assignment = _get_assignment(db, qr_code.id, agenda.assembly_id, tenant_id)
 
     unit_ids = [
         row[0]

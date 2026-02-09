@@ -1,4 +1,6 @@
 """Voting endpoints."""
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,7 @@ from app.features.voting.schemas import (
     VoteCastRequest,
     VoteCastResponse,
     VoteResponse,
+    VotingStatusResponse,
 )
 
 router = APIRouter()
@@ -28,17 +31,17 @@ router = APIRouter()
 async def cast_vote(
     payload: VoteCastRequest,
     db: Session = Depends(get_db),
-    tenant_id: int = Depends(get_current_tenant),
 ) -> VoteCastResponse:
     """Cast vote for the units linked to a QR code."""
+    qr_code = service.get_qr_code_for_voting(db, payload.qr_token)
     vote_ids = service.cast_vote(
         db,
         payload.qr_token,
         payload.agenda_id,
         payload.option_id,
-        tenant_id,
+        qr_code.tenant_id,
     )
-    agenda = agendas_service.get_agenda(db, payload.agenda_id, tenant_id)
+    agenda = agendas_service.get_agenda(db, payload.agenda_id, qr_code.tenant_id)
     votes_count = (
         db.query(Vote)
         .filter(
@@ -54,6 +57,19 @@ async def cast_vote(
         votes_created=len(vote_ids),
         vote_ids=vote_ids,
     )
+
+
+@router.get(
+    "/status/{qr_token}",
+    response_model=VotingStatusResponse,
+    summary="Get voting status by QR token",
+)
+async def get_voting_status(
+    qr_token: UUID,
+    db: Session = Depends(get_db),
+) -> VotingStatusResponse:
+    """Return current public voting status for a QR token."""
+    return service.get_voting_status(db, qr_token)
 
 
 @router.post(
