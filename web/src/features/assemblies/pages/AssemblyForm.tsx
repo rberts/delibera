@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -22,7 +22,10 @@ import {
   useCreateAssembly,
   useUpdateAssembly,
 } from '../hooks/useAssemblies';
-import { useCondominiums } from '@/features/condominiums/hooks/useCondominiums';
+import {
+  useCondominium,
+  useCondominiums,
+} from '@/features/condominiums/hooks/useCondominiums';
 import type { AssemblyType } from '@/types/api';
 
 const assemblySchema = z.object({
@@ -53,17 +56,19 @@ export default function AssemblyForm() {
 
   const assemblyId = Number(id);
   const { data: assembly, isLoading: isLoadingAssembly } = useAssembly(assemblyId);
-  const { data: condominiumsData, isLoading: isLoadingCondominiums } = useCondominiums(1, 100, 'active');
+  const { data: condominiumsData, isLoading: isLoadingCondominiums } = useCondominiums(1, 500, 'active');
+  const currentCondominiumId = assembly?.condominium_id ?? 0;
+  const { data: currentCondominium } = useCondominium(currentCondominiumId);
 
   const createMutation = useCreateAssembly();
   const updateMutation = useUpdateAssembly(assemblyId);
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<AssemblyFormData>({
     resolver: zodResolver(assemblySchema),
@@ -87,6 +92,27 @@ export default function AssemblyForm() {
       assembly_type: assembly.assembly_type,
     });
   }, [assembly, reset]);
+
+  const condominiumOptions = useMemo(() => {
+    return [
+      ...(condominiumsData?.items || []),
+      ...(currentCondominium &&
+      !(condominiumsData?.items || []).some((item) => item.id === currentCondominium.id)
+        ? [currentCondominium]
+        : []),
+    ];
+  }, [condominiumsData?.items, currentCondominium]);
+
+  useEffect(() => {
+    if (!assembly) return;
+    const hasCurrentOption = condominiumOptions.some((item) => item.id === assembly.condominium_id);
+    if (!hasCurrentOption) return;
+    setValue('condominium_id', assembly.condominium_id, {
+      shouldValidate: false,
+      shouldDirty: false,
+      shouldTouch: false,
+    });
+  }, [assembly, condominiumOptions, setValue]);
 
   const onSubmit = (data: AssemblyFormData) => {
     const payload = {
@@ -149,21 +175,28 @@ export default function AssemblyForm() {
 
             <div className="space-y-2">
               <Label>Condominio</Label>
-              <Select
-                value={watch('condominium_id') ? String(watch('condominium_id')) : undefined}
-                onValueChange={(value) => setValue('condominium_id', Number(value), { shouldValidate: true })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um condominio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(condominiumsData?.items || []).map((condominium) => (
-                    <SelectItem key={condominium.id} value={String(condominium.id)}>
-                      {condominium.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="condominium_id"
+                render={({ field }) => (
+                  <Select
+                    key={`condo-select-${condominiumOptions.length}-${field.value ?? 'empty'}`}
+                    value={field.value ? String(field.value) : undefined}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione um condominio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {condominiumOptions.map((condominium) => (
+                        <SelectItem key={condominium.id} value={String(condominium.id)}>
+                          {condominium.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {isLoadingCondominiums && <p className="text-sm text-muted-foreground">Carregando condominios...</p>}
               {errors.condominium_id && <p className="text-sm text-red-600">{errors.condominium_id.message}</p>}
             </div>
@@ -182,18 +215,21 @@ export default function AssemblyForm() {
 
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select
-                value={watch('assembly_type')}
-                onValueChange={(value) => setValue('assembly_type', value as AssemblyType, { shouldValidate: true })}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ordinary">Ordinaria</SelectItem>
-                  <SelectItem value="extraordinary">Extraordinaria</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="assembly_type"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={(value) => field.onChange(value as AssemblyType)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ordinary">Ordinaria</SelectItem>
+                      <SelectItem value="extraordinary">Extraordinaria</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.assembly_type && <p className="text-sm text-red-600">{errors.assembly_type.message}</p>}
             </div>
 
