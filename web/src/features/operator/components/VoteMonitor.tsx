@@ -17,7 +17,7 @@ import type { AgendaResults } from '../hooks/useOperatorDashboard';
 interface AgendaItem {
   id: number;
   title: string;
-  status: 'draft' | 'open' | 'closed';
+  status: 'draft' | 'open' | 'closed' | 'cancelled';
 }
 
 interface VoteMonitorProps {

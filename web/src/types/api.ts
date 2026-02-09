@@ -108,7 +108,7 @@ export interface QRCodeGenerateRequest {
 }
 
 // ============= Agenda =============
-export type AgendaStatus = 'draft' | 'open' | 'closed';
+export type AgendaStatus = 'draft' | 'open' | 'closed' | 'cancelled';
 
 export interface AgendaOptionResponse {
   id: number;
@@ -133,7 +133,6 @@ export interface AgendaCreate {
   title: string;
   description?: string;
   display_order: number;
-  options: Array<{ option_text: string; display_order: number }>;
 }
 
 // ============= Voting =============

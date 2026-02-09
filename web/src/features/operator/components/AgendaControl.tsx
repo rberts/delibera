@@ -6,7 +6,7 @@ interface AgendaItem {
   id: number;
   title: string;
   description?: string;
-  status: 'draft' | 'open' | 'closed';
+  status: 'draft' | 'open' | 'closed' | 'cancelled';
   display_order: number;
 }
 
@@ -21,12 +21,14 @@ interface AgendaControlProps {
 function statusLabel(status: AgendaItem['status']) {
   if (status === 'open') return 'Aberta';
   if (status === 'closed') return 'Fechada';
+  if (status === 'cancelled') return 'Cancelada';
   return 'Rascunho';
 }
 
 function statusClassName(status: AgendaItem['status']) {
   if (status === 'open') return 'bg-blue-100 text-blue-700';
   if (status === 'closed') return 'bg-green-100 text-green-700';
+  if (status === 'cancelled') return 'bg-red-100 text-red-700';
   return 'bg-gray-100 text-gray-700';
 }
 
@@ -70,7 +72,7 @@ export function AgendaControl({
                 <Button
                   size="sm"
                   onClick={() => onOpenAgenda(agenda.id)}
-                  disabled={isSubmitting || agenda.status === 'closed'}
+                  disabled={isSubmitting || agenda.status === 'closed' || agenda.status === 'cancelled'}
                 >
                   Abrir pauta
                 </Button>

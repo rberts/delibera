@@ -13,6 +13,7 @@ import CondominiumForm from '@/features/condominiums/pages/CondominiumForm';
 import AssembliesList from '@/features/assemblies/pages/AssembliesList';
 import AssemblyForm from '@/features/assemblies/pages/AssemblyForm';
 import AssemblyDetails from '@/features/assemblies/pages/AssemblyDetails';
+import AgendaForm from '@/features/agendas/pages/AgendaForm';
 import CheckinPage from '@/features/checkin/pages/CheckinPage';
 import OperatorDashboard from '@/features/operator/pages/OperatorDashboard';
 import QRCodesList from '@/features/qr-codes/pages/QRCodesList';
@@ -101,6 +102,14 @@ export const router = createBrowserRouter([
       {
         path: '/assemblies/:id/edit',
         element: <AssemblyForm />,
+      },
+      {
+        path: '/assemblies/:id/agendas/new',
+        element: <AgendaForm />,
+      },
+      {
+        path: '/assemblies/:id/agendas/:agendaId/edit',
+        element: <AgendaForm />,
       },
       {
         path: '/assemblies/:id/checkin',
