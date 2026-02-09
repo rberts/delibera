@@ -13,6 +13,7 @@ import CondominiumForm from '@/features/condominiums/pages/CondominiumForm';
 import AssembliesList from '@/features/assemblies/pages/AssembliesList';
 import AssemblyForm from '@/features/assemblies/pages/AssemblyForm';
 import AssemblyDetails from '@/features/assemblies/pages/AssemblyDetails';
+import CheckinPage from '@/features/checkin/pages/CheckinPage';
 import QRCodesList from '@/features/qr-codes/pages/QRCodesList';
 import VotingPage from '@/features/voting/pages/VotingPage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -113,7 +114,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/assemblies/:id/checkin',
-        element: <ComingSoonPage title="Check-in" />,
+        element: <CheckinPage />,
       },
       {
         path: '/assemblies/:id/operate',
