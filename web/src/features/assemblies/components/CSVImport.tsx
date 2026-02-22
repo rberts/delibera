@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,13 +26,14 @@ export function CSVImport({ assemblyId, disabled = false }: CSVImportProps) {
   const previewMutation = useCSVPreview(assemblyId);
   const importMutation = useCSVImport(assemblyId);
 
-  useEffect(() => {
-    if (!open) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
       setFile(null);
       previewMutation.reset();
       importMutation.reset();
     }
-  }, [importMutation, open, previewMutation]);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -50,19 +51,19 @@ export function CSVImport({ assemblyId, disabled = false }: CSVImportProps) {
     formData.append('file', file);
     importMutation.mutate(formData, {
       onSuccess: () => {
-        setOpen(false);
+        handleOpenChange(false);
       },
     });
   };
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} disabled={disabled}>
+      <Button onClick={() => handleOpenChange(true)} disabled={disabled}>
         <Upload className="mr-2 h-4 w-4" />
         Importar CSV
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Importar Unidades</DialogTitle>
@@ -127,7 +128,7 @@ export function CSVImport({ assemblyId, disabled = false }: CSVImportProps) {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={importMutation.isPending}
             >
               Cancelar
