@@ -6,6 +6,15 @@ interface QRScannerProps {
   onScan: (token: string) => void;
 }
 
+function extractToken(decodedText: string): string {
+  const trimmed = decodedText.trim();
+  const match = trimmed.match(/\/vote\/([^/?#]+)/i);
+  if (match?.[1]) {
+    return decodeURIComponent(match[1]);
+  }
+  return trimmed;
+}
+
 export function QRScanner({ onScan }: QRScannerProps) {
   const [isActive, setIsActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -25,7 +34,7 @@ export function QRScanner({ onScan }: QRScannerProps) {
           { fps: 10, qrbox: { width: 230, height: 230 } },
           (decodedText) => {
             if (cancelled) return;
-            onScan(decodedText);
+            onScan(extractToken(decodedText));
             setIsActive(false);
           },
           () => {
@@ -34,7 +43,7 @@ export function QRScanner({ onScan }: QRScannerProps) {
         );
         setErrorMessage(null);
       } catch {
-        setErrorMessage('Nao foi possivel iniciar a camera. Use o token manual.');
+        setErrorMessage('Nao foi possivel iniciar a camera. Use o numero visual manual.');
       }
     };
 

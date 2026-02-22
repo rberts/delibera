@@ -18,18 +18,17 @@ interface UnitSelectorProps {
   isLoadingUnits: boolean;
   onSubmit: (params: { unitIds: number[]; isProxy: boolean }) => void;
   isSubmitting: boolean;
+  hasQrIdentifier: boolean;
 }
 
-function parseIds(input: string): number[] {
-  return input
-    .split(',')
-    .map((value) => Number(value.trim()))
-    .filter((value) => Number.isInteger(value) && value > 0);
-}
-
-export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: UnitSelectorProps) {
+export function UnitSelector({
+  units,
+  isLoadingUnits,
+  onSubmit,
+  isSubmitting,
+  hasQrIdentifier,
+}: UnitSelectorProps) {
   const [search, setSearch] = useState('');
-  const [manualIds, setManualIds] = useState('');
   const [isProxy, setIsProxy] = useState(false);
   const [selectedUnitIds, setSelectedUnitIds] = useState<number[]>([]);
 
@@ -44,11 +43,6 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
       );
     });
   }, [search, units]);
-
-  const mergedUnitIds = useMemo(() => {
-    const fromManual = parseIds(manualIds);
-    return Array.from(new Set([...selectedUnitIds, ...fromManual]));
-  }, [manualIds, selectedUnitIds]);
 
   const unitsById = useMemo(() => {
     return new Map(units.map((unit) => [unit.id, unit]));
@@ -82,13 +76,10 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
 
   const clearSelection = () => {
     setSelectedUnitIds([]);
-    setManualIds('');
   };
 
   const removeId = (id: number) => {
     setSelectedUnitIds((current) => current.filter((item) => item !== id));
-    const parsed = parseIds(manualIds).filter((item) => item !== id);
-    setManualIds(parsed.join(', '));
   };
 
   return (
@@ -144,7 +135,7 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
               </TableRow>
             ) : (
               filteredUnits.map((unit) => {
-                const checked = mergedUnitIds.includes(unit.id);
+                const checked = selectedUnitIds.includes(unit.id);
                 return (
                   <TableRow key={unit.id}>
                     <TableCell>
@@ -166,20 +157,6 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
         </Table>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="manual-ids">IDs das unidades (manual)</Label>
-        <Input
-          id="manual-ids"
-          placeholder="Ex: 12, 13, 21"
-          value={manualIds}
-          onChange={(event) => setManualIds(event.target.value)}
-          disabled={isSubmitting}
-        />
-        <p className="text-xs text-muted-foreground">
-          Use este campo como fallback quando nao souber o nome exato do proprietario.
-        </p>
-      </div>
-
       <div className="flex items-center gap-2">
         <Checkbox
           id="proxy"
@@ -191,12 +168,12 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Unidades selecionadas ({mergedUnitIds.length})</p>
-        {mergedUnitIds.length === 0 ? (
+        <p className="text-sm font-medium">Unidades selecionadas ({selectedUnitIds.length})</p>
+        {selectedUnitIds.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma unidade selecionada.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {mergedUnitIds.map((id) => (
+            {selectedUnitIds.map((id) => (
               <button
                 key={id}
                 type="button"
@@ -212,8 +189,8 @@ export function UnitSelector({ units, isLoadingUnits, onSubmit, isSubmitting }: 
 
       <Button
         type="button"
-        onClick={() => onSubmit({ unitIds: mergedUnitIds, isProxy })}
-        disabled={isSubmitting || mergedUnitIds.length === 0}
+        onClick={() => onSubmit({ unitIds: selectedUnitIds, isProxy })}
+        disabled={isSubmitting || selectedUnitIds.length === 0 || !hasQrIdentifier}
       >
         {isSubmitting ? 'Confirmando...' : 'Confirmar check-in'}
       </Button>

@@ -25,7 +25,8 @@ interface AttendanceListResponse {
 }
 
 interface CheckinPayload {
-  qr_token: string;
+  qr_token?: string;
+  qr_visual_number?: number;
   unit_ids: number[];
   is_proxy: boolean;
 }

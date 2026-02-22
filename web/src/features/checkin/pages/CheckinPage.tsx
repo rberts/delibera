@@ -44,7 +44,9 @@ export default function CheckinPage() {
   const assignMutation = useAssignQRCode(assemblyId);
   const undoMutation = useUndoCheckin();
 
-  const [tokenInput, setTokenInput] = useState('');
+  const [scannedToken, setScannedToken] = useState('');
+  const [manualVisualNumber, setManualVisualNumber] = useState('');
+  const [selectorKey, setSelectorKey] = useState(0);
 
   const quorumPercent = useMemo(() => {
     if (!quorumData) return 0;
@@ -88,22 +90,42 @@ export default function CheckinPage() {
   }, [quorumError]);
 
   const handleScan = (scannedToken: string) => {
-    setTokenInput(scannedToken);
+    setScannedToken(scannedToken.trim());
+    setManualVisualNumber('');
   };
 
   const handleAssign = ({ unitIds, isProxy }: { unitIds: number[]; isProxy: boolean }) => {
-    if (!tokenInput.trim()) return;
+    const token = scannedToken.trim();
+    const parsedVisualNumber = Number(manualVisualNumber.trim());
+    const hasValidVisualNumber = Number.isInteger(parsedVisualNumber) && parsedVisualNumber > 0;
 
-    assignMutation.mutate({
-      qr_token: tokenInput.trim(),
-      unit_ids: unitIds,
-      is_proxy: isProxy,
-    });
+    if (!token && !hasValidVisualNumber) return;
+
+    assignMutation.mutate(
+      {
+        qr_token: token || undefined,
+        qr_visual_number: token ? undefined : parsedVisualNumber,
+        unit_ids: unitIds,
+        is_proxy: isProxy,
+      },
+      {
+        onSuccess: () => {
+          setScannedToken('');
+          setManualVisualNumber('');
+          setSelectorKey((current) => current + 1);
+        },
+      }
+    );
   };
 
   const handleUndo = (assignmentId: number) => {
     undoMutation.mutate(assignmentId);
   };
+
+  const manualVisualNumberValue = Number(manualVisualNumber.trim());
+  const hasQrIdentifier =
+    scannedToken.trim().length > 0
+    || (Number.isInteger(manualVisualNumberValue) && manualVisualNumberValue > 0);
 
   if (isLoadingAssembly) {
     return (
@@ -170,20 +192,27 @@ export default function CheckinPage() {
           <QRScanner onScan={handleScan} />
 
           <div className="space-y-2">
-            <Label htmlFor="qr-token">Token do QR (manual)</Label>
+            <Label htmlFor="qr-visual-number">Numero visual do QR (manual)</Label>
             <Input
-              id="qr-token"
-              placeholder="Cole o token lido no QR"
-              value={tokenInput}
-              onChange={(event) => setTokenInput(event.target.value)}
+              id="qr-visual-number"
+              type="number"
+              min={1}
+              placeholder="Ex: 5"
+              value={manualVisualNumber}
+              onChange={(event) => {
+                setManualVisualNumber(event.target.value);
+                setScannedToken('');
+              }}
             />
           </div>
 
           <UnitSelector
+            key={selectorKey}
             units={unitsData?.items ?? []}
             isLoadingUnits={isLoadingUnits}
             onSubmit={handleAssign}
             isSubmitting={assignMutation.isPending}
+            hasQrIdentifier={hasQrIdentifier}
           />
         </CardContent>
       </Card>
