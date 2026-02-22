@@ -1,8 +1,11 @@
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { APIError } from '@/lib/api-client';
 import { VoteCard } from '../components/VoteCard';
 import { useVoting } from '../hooks/useVoting';
 
@@ -27,6 +30,15 @@ export default function VotingPage() {
     isSubmitting,
   } = useVoting(token || '');
 
+  useEffect(() => {
+    if (!error) return;
+    const detail =
+      error instanceof APIError
+        ? ((error.data as { detail?: string })?.detail ?? 'Falha ao carregar sessão de votação.')
+        : 'Falha ao carregar sessão de votação.';
+    toast.error(detail);
+  }, [error]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 px-4 py-8">
@@ -50,7 +62,10 @@ export default function VotingPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              QR Code invalido ou votacao indisponivel no momento.
+              {error instanceof APIError
+                ? ((error.data as { detail?: string })?.detail ??
+                  'QR Code invalido ou votacao indisponivel no momento.')
+                : 'QR Code invalido ou votacao indisponivel no momento.'}
             </p>
           </CardContent>
         </Card>

@@ -1,13 +1,17 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil, Play, Plus, Square, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { APIError } from '@/lib/api-client';
 import { AssemblyStatusBadge } from '../components/AssemblyStatusBadge';
 import { useAssembly, useFinishAssembly, useStartAssembly } from '../hooks/useAssemblies';
 import { useAgendas, useDeleteAgenda } from '@/features/agendas/hooks/useAgendas';
+import { ReportDownload } from '@/features/reports/components/ReportDownload';
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString('pt-BR', {
@@ -45,6 +49,24 @@ export default function AssemblyDetails() {
 
   const startMutation = useStartAssembly();
   const finishMutation = useFinishAssembly();
+
+  useEffect(() => {
+    if (!error) return;
+    const message =
+      error instanceof APIError
+        ? ((error.data as { detail?: string })?.detail ?? 'Falha ao carregar assembleia.')
+        : 'Falha ao carregar assembleia.';
+    toast.error(message);
+  }, [error]);
+
+  useEffect(() => {
+    if (!agendasQuery.error) return;
+    const message =
+      agendasQuery.error instanceof APIError
+        ? ((agendasQuery.error.data as { detail?: string })?.detail ?? 'Falha ao carregar pautas.')
+        : 'Falha ao carregar pautas.';
+    toast.error(message);
+  }, [agendasQuery.error]);
 
   if (isLoading) {
     return (
@@ -134,19 +156,33 @@ export default function AssemblyDetails() {
         </TabsList>
 
         <TabsContent value="overview" className="pt-4">
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <p className="text-sm text-muted-foreground">Acoes rapidas</p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild variant="outline">
-                  <Link to={`/assemblies/${assembly.id}/operate`}>Abrir dashboard do operador</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to={`/assemblies/${assembly.id}/checkin`}>Abrir check-in</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <p className="text-sm text-muted-foreground">Acoes rapidas</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline">
+                    <Link to={`/assemblies/${assembly.id}/operate`}>Abrir dashboard do operador</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to={`/assemblies/${assembly.id}/checkin`}>Abrir check-in</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Relatorios</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReportDownload
+                  assemblyId={assembly.id}
+                  agendas={agendasQuery.data?.items ?? []}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="agendas" className="pt-4">

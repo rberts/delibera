@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { APIError } from '@/lib/api-client';
 import { useAssembly } from '@/features/assemblies/hooks/useAssemblies';
 import { useAttendanceList, useQuorum } from '@/features/checkin/hooks/useCheckin';
 import { useRealtimeAssembly } from '@/hooks/useRealtimeAssembly';
@@ -83,6 +85,34 @@ export default function OperatorDashboard() {
   }, [agendasQuery.data, openAgenda, selectedAgendaId]);
 
   const resultsQuery = useAgendaResults(selectedAgendaId);
+
+  useEffect(() => {
+    if (!assemblyError) return;
+    const detail =
+      assemblyError instanceof APIError
+        ? ((assemblyError.data as { detail?: string })?.detail ?? 'Falha ao carregar assembleia.')
+        : 'Falha ao carregar assembleia.';
+    toast.error(detail);
+  }, [assemblyError]);
+
+  useEffect(() => {
+    if (!agendasQuery.error) return;
+    const detail =
+      agendasQuery.error instanceof APIError
+        ? ((agendasQuery.error.data as { detail?: string })?.detail ?? 'Falha ao carregar pautas.')
+        : 'Falha ao carregar pautas.';
+    toast.error(detail);
+  }, [agendasQuery.error]);
+
+  useEffect(() => {
+    if (!resultsQuery.error) return;
+    const detail =
+      resultsQuery.error instanceof APIError
+        ? ((resultsQuery.error.data as { detail?: string })?.detail ??
+          'Falha ao carregar resultados da pauta.')
+        : 'Falha ao carregar resultados da pauta.';
+    toast.error(detail);
+  }, [resultsQuery.error]);
 
   if (isAssemblyLoading) {
     return (

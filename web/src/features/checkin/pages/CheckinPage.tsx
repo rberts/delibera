@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { APIError } from '@/lib/api-client';
 import { useAssembly } from '@/features/assemblies/hooks/useAssemblies';
 import { AttendanceList } from '../components/AttendanceList';
 import { QRScanner } from '../components/QRScanner';
@@ -28,9 +31,13 @@ export default function CheckinPage() {
   const navigate = useNavigate();
   const assemblyId = Number(id);
 
-  const { data: assembly, isLoading: isLoadingAssembly } = useAssembly(assemblyId);
-  const { data: attendanceData, isLoading: isLoadingAttendance } = useAttendanceList(assemblyId);
-  const { data: quorumData, isLoading: isLoadingQuorum } = useQuorum(assemblyId);
+  const { data: assembly, isLoading: isLoadingAssembly, error: assemblyError } = useAssembly(assemblyId);
+  const {
+    data: attendanceData,
+    isLoading: isLoadingAttendance,
+    error: attendanceError,
+  } = useAttendanceList(assemblyId);
+  const { data: quorumData, isLoading: isLoadingQuorum, error: quorumError } = useQuorum(assemblyId);
 
   const assignMutation = useAssignQRCode(assemblyId);
   const undoMutation = useUndoCheckin();
@@ -41,6 +48,33 @@ export default function CheckinPage() {
     if (!quorumData) return 0;
     return Math.min(100, Math.max(0, quorumData.fraction_present));
   }, [quorumData]);
+
+  useEffect(() => {
+    if (!assemblyError) return;
+    const detail =
+      assemblyError instanceof APIError
+        ? ((assemblyError.data as { detail?: string })?.detail ?? 'Falha ao carregar assembleia.')
+        : 'Falha ao carregar assembleia.';
+    toast.error(detail);
+  }, [assemblyError]);
+
+  useEffect(() => {
+    if (!attendanceError) return;
+    const detail =
+      attendanceError instanceof APIError
+        ? ((attendanceError.data as { detail?: string })?.detail ?? 'Falha ao carregar lista de presenca.')
+        : 'Falha ao carregar lista de presenca.';
+    toast.error(detail);
+  }, [attendanceError]);
+
+  useEffect(() => {
+    if (!quorumError) return;
+    const detail =
+      quorumError instanceof APIError
+        ? ((quorumError.data as { detail?: string })?.detail ?? 'Falha ao carregar quorum.')
+        : 'Falha ao carregar quorum.';
+    toast.error(detail);
+  }, [quorumError]);
 
   const handleScan = (scannedToken: string) => {
     setTokenInput(scannedToken);
