@@ -133,6 +133,10 @@ export interface AgendaCreate {
   title: string;
   description?: string;
   display_order: number;
+  options: Array<{
+    option_text: string;
+    display_order: number;
+  }>;
 }
 
 // ============= Voting =============

@@ -12,6 +12,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.core.enums import AgendaStatus
@@ -41,6 +42,12 @@ class Agenda(Base):
     closed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    options = relationship(
+        "AgendaOption",
+        back_populates="agenda",
+        cascade="all, delete-orphan",
+        order_by="AgendaOption.display_order",
+    )
 
 
 class AgendaOption(Base):
@@ -56,3 +63,4 @@ class AgendaOption(Base):
     option_text = Column(String(255), nullable=False)
     display_order = Column(Integer, nullable=False, server_default="0")
     created_at = Column(DateTime, server_default=func.now())
+    agenda = relationship("Agenda", back_populates="options")

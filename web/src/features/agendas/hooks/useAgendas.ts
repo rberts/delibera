@@ -8,12 +8,20 @@ export interface AgendaCreatePayload {
   title: string;
   description?: string;
   display_order: number;
+  options: Array<{
+    option_text: string;
+    display_order: number;
+  }>;
 }
 
 export interface AgendaUpdatePayload {
   title?: string;
   description?: string;
   display_order?: number;
+  options?: Array<{
+    option_text: string;
+    display_order: number;
+  }>;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {

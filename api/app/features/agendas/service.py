@@ -1,10 +1,10 @@
 """Business logic for agenda CRUD operations."""
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql import func
 
 from app.core.enums import AgendaStatus, AssemblyStatus
-from app.features.agendas.models import Agenda
+from app.features.agendas.models import Agenda, AgendaOption
 from app.features.agendas.schemas import AgendaCreate, AgendaUpdate
 from app.features.assemblies.models import Assembly
 from app.features.condominiums.models import Condominium
@@ -39,6 +39,17 @@ def create_agenda(db: Session, agenda: AgendaCreate, tenant_id: int) -> Agenda:
     )
 
     db.add(db_agenda)
+    db.flush()
+
+    db_options = [
+        AgendaOption(
+            agenda_id=db_agenda.id,
+            option_text=option.option_text,
+            display_order=option.display_order,
+        )
+        for option in agenda.options
+    ]
+    db.add_all(db_options)
     db.commit()
     db.refresh(db_agenda)
 
@@ -49,6 +60,7 @@ def get_agenda(db: Session, agenda_id: int, tenant_id: int) -> Agenda:
     """Get agenda by ID (tenant isolated)."""
     agenda = (
         db.query(Agenda)
+        .options(selectinload(Agenda.options))
         .join(Assembly, Agenda.assembly_id == Assembly.id)
         .join(Condominium, Assembly.condominium_id == Condominium.id)
         .filter(
@@ -74,6 +86,7 @@ def list_agendas(
     """List agendas with pagination (tenant isolated)."""
     query = (
         db.query(Agenda)
+        .options(selectinload(Agenda.options))
         .join(Assembly, Agenda.assembly_id == Assembly.id)
         .join(Condominium, Assembly.condominium_id == Condominium.id)
         .filter(Condominium.tenant_id == tenant_id)
@@ -89,9 +102,11 @@ def update_agenda(db: Session, agenda_id: int, agenda_update: AgendaUpdate, tena
     """Update agenda fields."""
     agenda = get_agenda(db, agenda_id, tenant_id)
     update_data = agenda_update.model_dump(exclude_unset=True)
+    options_data = update_data.pop("options", None)
     if agenda.status == AgendaStatus.cancelled:
         allowed_fields = {"status"}
-        if set(update_data.keys()) - allowed_fields:
+        has_disallowed_fields = bool(set(update_data.keys()) - allowed_fields)
+        if has_disallowed_fields or options_data is not None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cancelled agendas can only change status",
@@ -109,6 +124,18 @@ def update_agenda(db: Session, agenda_id: int, agenda_update: AgendaUpdate, tena
 
     for field, value in update_data.items():
         setattr(agenda, field, value)
+
+    if options_data is not None:
+        db.query(AgendaOption).filter(AgendaOption.agenda_id == agenda.id).delete(synchronize_session=False)
+        db_options = [
+            AgendaOption(
+                agenda_id=agenda.id,
+                option_text=option["option_text"],
+                display_order=option["display_order"],
+            )
+            for option in options_data
+        ]
+        db.add_all(db_options)
 
     db.commit()
     db.refresh(agenda)

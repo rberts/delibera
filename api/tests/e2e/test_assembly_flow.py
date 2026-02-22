@@ -4,9 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-from app.features.agendas.models import AgendaOption
 from app.features.users.models import User
 
 
@@ -21,7 +19,6 @@ def _csv_payload() -> bytes:
 
 def test_complete_assembly_flow(
     authenticated_client: TestClient,
-    db_session: Session,
     sample_user: User,
 ) -> None:
     """Create assembly, import units, check-in, vote, and fetch results."""
@@ -88,15 +85,15 @@ def test_complete_assembly_flow(
             "title": "Aprovacao de contas",
             "description": "Ano 2025",
             "display_order": 1,
+            "options": [
+                {"option_text": "Sim", "display_order": 1},
+                {"option_text": "Nao", "display_order": 2},
+            ],
         },
     )
     assert agenda_response.status_code == 201
     agenda_id = agenda_response.json()["id"]
-
-    option_yes = AgendaOption(agenda_id=agenda_id, option_text="Sim", display_order=1)
-    option_no = AgendaOption(agenda_id=agenda_id, option_text="Nao", display_order=2)
-    db_session.add_all([option_yes, option_no])
-    db_session.commit()
+    option_yes = next(option for option in agenda_response.json()["options"] if option["option_text"] == "Sim")
 
     open_response = client.put(
         f"/api/v1/agendas/{agenda_id}",
@@ -106,7 +103,7 @@ def test_complete_assembly_flow(
 
     vote_response = client.post(
         "/api/v1/voting/vote",
-        json={"qr_token": qr_token, "agenda_id": agenda_id, "option_id": option_yes.id},
+        json={"qr_token": qr_token, "agenda_id": agenda_id, "option_id": option_yes["id"]},
     )
     assert vote_response.status_code == 201
     assert vote_response.json()["votes_created"] >= 1

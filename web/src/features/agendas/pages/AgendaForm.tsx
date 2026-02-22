@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,13 @@ const agendaSchema = z.object({
   title: z.string().min(1, 'Titulo e obrigatorio').max(255),
   description: z.string().optional(),
   display_order: z.coerce.number().int().min(0, 'Ordem deve ser maior ou igual a 0'),
+  options: z
+    .array(
+      z.object({
+        option_text: z.string().trim().min(1, 'Opcao e obrigatoria').max(255),
+      })
+    )
+    .min(2, 'Informe ao menos 2 opcoes de voto'),
 });
 
 type AgendaFormData = z.infer<typeof agendaSchema>;
@@ -36,6 +43,7 @@ export default function AgendaForm() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<AgendaFormData>({
     resolver: zodResolver(agendaSchema),
@@ -43,7 +51,13 @@ export default function AgendaForm() {
       title: '',
       description: '',
       display_order: 0,
+      options: [{ option_text: '' }, { option_text: '' }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'options',
   });
 
   useEffect(() => {
@@ -53,6 +67,13 @@ export default function AgendaForm() {
       title: agenda.title,
       description: agenda.description || '',
       display_order: agenda.display_order,
+      options:
+        agenda.options && agenda.options.length > 0
+          ? agenda.options
+              .slice()
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((option) => ({ option_text: option.option_text }))
+          : [{ option_text: '' }, { option_text: '' }],
     });
   }, [agenda, reset]);
 
@@ -61,6 +82,10 @@ export default function AgendaForm() {
       title: data.title,
       description: data.description?.trim() || undefined,
       display_order: data.display_order,
+      options: data.options.map((option, index) => ({
+        option_text: option.option_text.trim(),
+        display_order: index + 1,
+      })),
     };
 
     if (isEditing) {
@@ -131,6 +156,52 @@ export default function AgendaForm() {
               <Label htmlFor="display_order">Ordem</Label>
               <Input id="display_order" type="number" min={0} step={1} {...register('display_order')} />
               {errors.display_order && <p className="text-sm text-red-600">{errors.display_order.message}</p>}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label>Opcoes de voto</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ option_text: '' })}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar opcao
+                </Button>
+              </div>
+
+              {fields.map((field, index) => (
+                <div key={field.id} className="space-y-2 rounded-md border p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor={`options.${index}.option_text`}>Opcao {index + 1}</Label>
+                      <Input
+                        id={`options.${index}.option_text`}
+                        placeholder={index === 0 ? 'Ex.: Candidato A' : 'Ex.: Candidato B'}
+                        {...register(`options.${index}.option_text` as const)}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-6"
+                      onClick={() => remove(index)}
+                      disabled={fields.length <= 2}
+                      title={fields.length <= 2 ? 'Minimo de 2 opcoes' : 'Remover opcao'}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {errors.options?.[index]?.option_text && (
+                    <p className="text-sm text-red-600">{errors.options[index]?.option_text?.message}</p>
+                  )}
+                </div>
+              ))}
+
+              {errors.options?.message && <p className="text-sm text-red-600">{errors.options.message}</p>}
             </div>
 
             <div className="flex flex-wrap gap-4">
