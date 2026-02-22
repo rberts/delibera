@@ -45,12 +45,13 @@ async function request<T>(
   }
 
   // Configuração padrão
+  const headers = new Headers(fetchOptions.headers);
+  if (!(fetchOptions.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   const config: RequestInit = {
     credentials: 'include', // Importante: envia cookies httpOnly
-    headers: {
-      'Content-Type': 'application/json',
-      ...fetchOptions.headers,
-    },
+    headers,
     ...fetchOptions,
   };
 
@@ -93,6 +94,12 @@ export const api = {
     request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  postForm: <T>(endpoint: string, formData: FormData) =>
+    request<T>(endpoint, {
+      method: 'POST',
+      body: formData,
     }),
 
   put: <T>(endpoint: string, data?: unknown) =>

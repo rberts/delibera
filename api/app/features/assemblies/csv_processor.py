@@ -175,11 +175,22 @@ async def preview_csv_import(file: UploadFile, assembly_id: int) -> Dict[str, An
     unit_numbers_seen = set()
     total_fraction = 0.0
 
-    for idx, row in enumerate(rows[:10], start=2):
+    for idx, row in enumerate(rows, start=2):
+        line_errors = []
+        validated: Dict[str, Any] | None = None
         try:
             validated = validate_csv_row(row, idx)
+        except CSVValidationError as exc:
+            line_errors.append(
+                {
+                    "line": exc.line_number,
+                    "field": exc.field,
+                    "message": exc.message,
+                }
+            )
+        if validated:
             if validated["unit_number"] in unit_numbers_seen:
-                errors.append(
+                line_errors.append(
                     {
                         "line": idx,
                         "field": "unit_number",
@@ -188,36 +199,34 @@ async def preview_csv_import(file: UploadFile, assembly_id: int) -> Dict[str, An
                 )
             else:
                 unit_numbers_seen.add(validated["unit_number"])
-
             total_fraction += validated["ideal_fraction"]
 
-            preview_data.append(
-                {
-                    "line": idx,
-                    "unit_number": validated["unit_number"],
-                    "owner_name": validated["owner_name"],
-                    "ideal_fraction": validated["ideal_fraction"],
-                    "cpf_cnpj": validated["cpf_cnpj"],
-                }
-            )
-        except CSVValidationError as exc:
-            errors.append(
-                {
-                    "line": exc.line_number,
-                    "field": exc.field,
-                    "message": exc.message,
-                }
-            )
-            preview_data.append(
-                {
-                    "line": idx,
-                    "unit_number": row.get("unit_number", ""),
-                    "owner_name": row.get("owner_name", ""),
-                    "ideal_fraction": row.get("ideal_fraction", ""),
-                    "cpf_cnpj": row.get("cpf_cnpj", ""),
-                    "error": True,
-                }
-            )
+        if line_errors:
+            errors.extend(line_errors)
+
+        if idx <= 11:
+            if validated:
+                preview_data.append(
+                    {
+                        "line": idx,
+                        "unit_number": validated["unit_number"],
+                        "owner_name": validated["owner_name"],
+                        "ideal_fraction": validated["ideal_fraction"],
+                        "cpf_cnpj": validated["cpf_cnpj"],
+                        "error": len(line_errors) > 0,
+                    }
+                )
+            else:
+                preview_data.append(
+                    {
+                        "line": idx,
+                        "unit_number": row.get("unit_number", ""),
+                        "owner_name": row.get("owner_name", ""),
+                        "ideal_fraction": row.get("ideal_fraction", ""),
+                        "cpf_cnpj": row.get("cpf_cnpj", ""),
+                        "error": True,
+                    }
+                )
 
     warnings = []
     if abs(total_fraction - 100.0) > 0.1:

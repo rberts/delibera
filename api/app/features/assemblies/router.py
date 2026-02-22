@@ -12,6 +12,8 @@ from app.features.assemblies.schemas import (
     AssemblyCreate,
     AssemblyListResponse,
     AssemblyResponse,
+    AssemblyUnitResponse,
+    AssemblyUnitsListResponse,
     AssemblyUpdate,
 )
 
@@ -80,6 +82,25 @@ async def get_assembly(
     """Get assembly by ID."""
     assembly = service.get_assembly(db, assembly_id, tenant_id)
     return AssemblyResponse.model_validate(assembly)
+
+
+@router.get(
+    "/{assembly_id}/units",
+    response_model=AssemblyUnitsListResponse,
+    summary="List imported assembly units",
+)
+async def list_units(
+    assembly_id: int,
+    db: Session = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant),
+) -> AssemblyUnitsListResponse:
+    """List imported units for an assembly snapshot."""
+    units, total, fraction_sum = service.list_assembly_units(db, assembly_id, tenant_id)
+    return AssemblyUnitsListResponse(
+        items=[AssemblyUnitResponse.model_validate(unit) for unit in units],
+        total=total,
+        fraction_sum=fraction_sum,
+    )
 
 
 @router.put(

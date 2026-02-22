@@ -7,11 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { APIError } from '@/lib/api-client';
 import { AssemblyStatusBadge } from '../components/AssemblyStatusBadge';
 import { useAssembly, useFinishAssembly, useStartAssembly } from '../hooks/useAssemblies';
+import { useAssemblyUnits } from '../hooks/useAssemblyUnits';
 import { useAgendas, useDeleteAgenda } from '@/features/agendas/hooks/useAgendas';
 import { ReportDownload } from '@/features/reports/components/ReportDownload';
+import { CSVImport } from '../components/CSVImport';
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString('pt-BR', {
@@ -44,6 +54,7 @@ export default function AssemblyDetails() {
 
   const assemblyId = Number(id);
   const { data: assembly, isLoading, error } = useAssembly(assemblyId);
+  const unitsQuery = useAssemblyUnits(assemblyId);
   const agendasQuery = useAgendas(assemblyId);
   const deleteAgendaMutation = useDeleteAgenda();
 
@@ -67,6 +78,15 @@ export default function AssemblyDetails() {
         : 'Falha ao carregar pautas.';
     toast.error(message);
   }, [agendasQuery.error]);
+
+  useEffect(() => {
+    if (!unitsQuery.error) return;
+    const message =
+      unitsQuery.error instanceof APIError
+        ? ((unitsQuery.error.data as { detail?: string })?.detail ?? 'Falha ao carregar unidades importadas.')
+        : 'Falha ao carregar unidades importadas.';
+    toast.error(message);
+  }, [unitsQuery.error]);
 
   if (isLoading) {
     return (
@@ -246,11 +266,81 @@ export default function AssemblyDetails() {
         </TabsContent>
 
         <TabsContent value="units" className="pt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">Importacao e gestao de unidades sera integrada no check-in.</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Importe as unidades desta assembleia via CSV para liberar check-in e votacao.
+                  </p>
+                  <CSVImport
+                    assemblyId={assembly.id}
+                    disabled={(unitsQuery.data?.total ?? 0) > 0}
+                  />
+                </div>
+                {(unitsQuery.data?.total ?? 0) > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Esta assembleia ja possui unidades importadas. Para manter o snapshot imutavel, nao e permitido reimportar.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Unidades Importadas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {unitsQuery.isLoading ? (
+                  <Skeleton className="h-28 w-full" />
+                ) : (
+                  <>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="rounded-md border p-3">
+                        <p className="text-sm text-muted-foreground">Total de unidades</p>
+                        <p className="text-xl font-semibold">{unitsQuery.data?.total ?? 0}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="text-sm text-muted-foreground">Soma da fracao ideal</p>
+                        <p className="text-xl font-semibold">{(unitsQuery.data?.fraction_sum ?? 0).toFixed(2)}%</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Unidade</TableHead>
+                            <TableHead>Proprietario</TableHead>
+                            <TableHead>Fracao</TableHead>
+                            <TableHead>CPF/CNPJ</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(unitsQuery.data?.items.length ?? 0) === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                Nenhuma unidade importada para esta assembleia.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            unitsQuery.data?.items.map((unit) => (
+                              <TableRow key={unit.id}>
+                                <TableCell>{unit.unit_number}</TableCell>
+                                <TableCell>{unit.owner_name}</TableCell>
+                                <TableCell>{unit.ideal_fraction.toFixed(2)}%</TableCell>
+                                <TableCell>{unit.cpf_cnpj}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

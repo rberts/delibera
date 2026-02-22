@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, APIError } from '@/lib/api-client';
+import { useAssemblyUnits } from '@/features/assemblies/hooks/useAssemblyUnits';
 
 export interface AttendanceUnit {
   id: number;
@@ -61,6 +62,10 @@ export function useQuorum(assemblyId: number) {
     enabled: Number.isFinite(assemblyId) && assemblyId > 0,
     refetchInterval: 5000,
   });
+}
+
+export function useCheckinUnits(assemblyId: number) {
+  return useAssemblyUnits(assemblyId);
 }
 
 export function useAssignQRCode(assemblyId: number) {

@@ -16,6 +16,7 @@ import { UnitSelector } from '../components/UnitSelector';
 import {
   useAssignQRCode,
   useAttendanceList,
+  useCheckinUnits,
   useQuorum,
   useUndoCheckin,
 } from '../hooks/useCheckin';
@@ -37,6 +38,7 @@ export default function CheckinPage() {
     isLoading: isLoadingAttendance,
     error: attendanceError,
   } = useAttendanceList(assemblyId);
+  const { data: unitsData, isLoading: isLoadingUnits, error: unitsError } = useCheckinUnits(assemblyId);
   const { data: quorumData, isLoading: isLoadingQuorum, error: quorumError } = useQuorum(assemblyId);
 
   const assignMutation = useAssignQRCode(assemblyId);
@@ -66,6 +68,15 @@ export default function CheckinPage() {
         : 'Falha ao carregar lista de presenca.';
     toast.error(detail);
   }, [attendanceError]);
+
+  useEffect(() => {
+    if (!unitsError) return;
+    const detail =
+      unitsError instanceof APIError
+        ? ((unitsError.data as { detail?: string })?.detail ?? 'Falha ao carregar unidades da assembleia.')
+        : 'Falha ao carregar unidades da assembleia.';
+    toast.error(detail);
+  }, [unitsError]);
 
   useEffect(() => {
     if (!quorumError) return;
@@ -169,7 +180,8 @@ export default function CheckinPage() {
           </div>
 
           <UnitSelector
-            assemblyId={assemblyId}
+            units={unitsData?.items ?? []}
+            isLoadingUnits={isLoadingUnits}
             onSubmit={handleAssign}
             isSubmitting={assignMutation.isPending}
           />

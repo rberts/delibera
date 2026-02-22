@@ -2,10 +2,11 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.enums import AssemblyStatus, CondominiumStatus
-from app.features.assemblies.models import Assembly
+from app.features.assemblies.models import Assembly, AssemblyUnit
 from app.features.assemblies.schemas import AssemblyCreate, AssemblyUpdate
 from app.features.condominiums.models import Condominium
 from app.features.users.models import User
@@ -112,6 +113,30 @@ def list_assemblies(
     total = query.count()
     assemblies = query.order_by(Assembly.assembly_date.desc()).offset(skip).limit(limit).all()
     return assemblies, total
+
+
+def list_assembly_units(
+    db: Session,
+    assembly_id: int,
+    tenant_id: int,
+) -> tuple[list[AssemblyUnit], int, float]:
+    """List imported unit snapshots for an assembly."""
+    get_assembly(db, assembly_id, tenant_id)
+
+    units = (
+        db.query(AssemblyUnit)
+        .filter(AssemblyUnit.assembly_id == assembly_id)
+        .order_by(AssemblyUnit.unit_number.asc(), AssemblyUnit.id.asc())
+        .all()
+    )
+    total = len(units)
+    fraction_sum = (
+        db.query(func.coalesce(func.sum(AssemblyUnit.ideal_fraction), 0.0))
+        .filter(AssemblyUnit.assembly_id == assembly_id)
+        .scalar()
+        or 0.0
+    )
+    return units, total, float(fraction_sum)
 
 
 def update_assembly(

@@ -61,6 +61,28 @@ class AssemblyResponse(AssemblyBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AssemblyUnitResponse(BaseModel):
+    """Schema for assembly unit snapshot response."""
+
+    id: int
+    assembly_id: int
+    unit_number: str
+    owner_name: str
+    ideal_fraction: float
+    cpf_cnpj: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssemblyUnitsListResponse(BaseModel):
+    """Schema for assembly units list response."""
+
+    items: list[AssemblyUnitResponse]
+    total: int
+    fraction_sum: float
+
+
 class AssemblyListResponse(BaseModel):
     """Schema for paginated list of assemblies."""
 
