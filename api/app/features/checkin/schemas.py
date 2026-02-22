@@ -3,15 +3,24 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 
 class CheckInRequest(BaseModel):
     """Schema for check-in request payload."""
 
-    qr_token: UUID
+    qr_token: Optional[UUID] = None
+    qr_visual_number: Optional[int] = None
     unit_ids: List[int]
     is_proxy: bool = False
+
+    @model_validator(mode="after")
+    def validate_qr_identifier(self) -> "CheckInRequest":
+        has_token = self.qr_token is not None
+        has_visual_number = self.qr_visual_number is not None
+        if has_token == has_visual_number:
+            raise ValueError("Provide exactly one of qr_token or qr_visual_number")
+        return self
 
     @field_validator("unit_ids")
     @classmethod
@@ -20,6 +29,13 @@ class CheckInRequest(BaseModel):
             raise ValueError("unit_ids must not be empty")
         if len(value) != len(set(value)):
             raise ValueError("unit_ids must be unique")
+        return value
+
+    @field_validator("qr_visual_number")
+    @classmethod
+    def validate_qr_visual_number(cls, value: Optional[int]) -> Optional[int]:
+        if value is not None and value <= 0:
+            raise ValueError("qr_visual_number must be greater than zero")
         return value
 
 

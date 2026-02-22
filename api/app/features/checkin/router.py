@@ -37,6 +37,7 @@ async def checkin(
         db,
         assembly_id,
         checkin_data.qr_token,
+        checkin_data.qr_visual_number,
         checkin_data.unit_ids,
         checkin_data.is_proxy,
         current_user.id,

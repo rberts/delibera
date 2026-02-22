@@ -33,8 +33,8 @@ def _get_assembly(db: Session, assembly_id: int, tenant_id: int) -> Assembly:
     return assembly
 
 
-def _get_qr_code(db: Session, qr_token: UUID, tenant_id: int) -> QRCode:
-    qr_code = (
+def _get_qr_code_by_token(db: Session, qr_token: UUID, tenant_id: int) -> QRCode | None:
+    return (
         db.query(QRCode)
         .filter(
             QRCode.token == qr_token,
@@ -44,6 +44,33 @@ def _get_qr_code(db: Session, qr_token: UUID, tenant_id: int) -> QRCode:
         )
         .first()
     )
+
+
+def _get_qr_code_by_visual_number(db: Session, qr_visual_number: int, tenant_id: int) -> QRCode | None:
+    return (
+        db.query(QRCode)
+        .filter(
+            QRCode.visual_number == qr_visual_number,
+            QRCode.tenant_id == tenant_id,
+            QRCode.deleted_at.is_(None),
+            QRCode.status == QRCodeStatus.active,
+        )
+        .first()
+    )
+
+
+def _resolve_qr_code(
+    db: Session,
+    tenant_id: int,
+    qr_token: UUID | None = None,
+    qr_visual_number: int | None = None,
+) -> QRCode:
+    qr_code = None
+    if qr_token is not None:
+        qr_code = _get_qr_code_by_token(db, qr_token, tenant_id)
+    elif qr_visual_number is not None:
+        qr_code = _get_qr_code_by_visual_number(db, qr_visual_number, tenant_id)
+
     if not qr_code:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR code not found")
     return qr_code
@@ -69,7 +96,8 @@ def _get_units(db: Session, assembly_id: int, unit_ids: List[int]) -> List[Assem
 def assign_qr_code(
     db: Session,
     assembly_id: int,
-    qr_token: UUID,
+    qr_token: UUID | None,
+    qr_visual_number: int | None,
     unit_ids: List[int],
     is_proxy: bool,
     assigned_by: int,
@@ -77,7 +105,7 @@ def assign_qr_code(
 ) -> QRCodeAssignment:
     """Assign QR code to units (check-in)."""
     _get_assembly(db, assembly_id, tenant_id)
-    qr_code = _get_qr_code(db, qr_token, tenant_id)
+    qr_code = _resolve_qr_code(db, tenant_id, qr_token, qr_visual_number)
 
     existing_assignment = (
         db.query(QRCodeAssignment)
